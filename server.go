@@ -13,6 +13,7 @@ import (
     "os"
     "regexp"
     "strconv"
+    "strings"
     "time"
 )
 
@@ -135,8 +136,14 @@ func handler(db *sql.DB, allowedClients []UserAgent) func(w http.ResponseWriter,
         }
 
         // Get client IP
-        ip, _, err := net.SplitHostPort(r.RemoteAddr)
-        if err != nil {
+        ips := strings.Split(r.Header.Get("X-FORWARDED-FOR"), ", ")
+        ip := ips[0]
+        if ip == "" {
+           ip = r.RemoteAddr
+           ip, _, _ = net.SplitHostPort(ip)
+        }
+
+        if ip == "" {
             error(w, "错误：无法获取客户端IP")
             return
         }
