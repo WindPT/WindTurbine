@@ -1,0 +1,13 @@
+{
+	"ImportPath": ".",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+        {
+            "ImportPath": "github.com/go-sql-driver/mysql"
+        },
+        {
+            "ImportPath": "github.com/jackpal/bencode-go"
+        }
+    ]
+}
