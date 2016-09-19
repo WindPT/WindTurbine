@@ -20,6 +20,8 @@ Simple install the package to your $GOPATH with the go tool from shell:
 $ go get github.com/labs7in0/WindTurbine
 ```
 
+And install dependency with doing a godep restore.
+
 ## Usage
 
 Make a copy of `config.sample.xml`, rename it to `config.xml` and modify it.
