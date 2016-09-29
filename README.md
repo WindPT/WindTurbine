@@ -39,6 +39,12 @@ $ make
 $ ./WindTurbine
 ```
 
+## TODO
+
+* [x] Peer Exchanging
+* [x] Logging for Data Transfer and History
+* [ ] Credit
+
 ## Donate us
 
 [Donate us](https://7in0.me/#donate)
