@@ -126,9 +126,10 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         return
     }
 
-    tr.db.Model(&user).Related(&user.PwUser, "PwUser")
+    var pwuser User
+    tr.db.Where("uid = ?", user.Uid).First(&pwuser)
 
-    if user.Uid != user.PwUser.Uid {
+    if user.Uid != pwuser.Uid {
         berror(c, "错误：用户不存在，请尝试重新下载种子")
         return
     }
@@ -152,15 +153,16 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         return
     }
 
-    tr.db.Model(&torrent).Related(&torrent.Thread, "Thread")
+    var bbs_thread BbsThread
+    tr.db.Where("tid = ?", torrent.Tid).First(&bbs_thread)
 
-    if torrent.Thread.Tid != torrent.Tid {
+    if bbs_thread.Tid != torrent.Tid {
         berror(c, "错误：种子不存在")
         return
     }
 
-    if torrent.Thread.Disabled > 0 && torrent.Thread.CreatedUserid != user.Uid {
-        if user.PwUser.Groupid < 3 || user.PwUser.Groupid > 5 {
+    if bbs_thread.Disabled > 0 && bbs_thread.CreatedUserid != user.Uid {
+        if pwuser.Groupid < 3 || pwuser.Groupid > 5 {
             berror(c, "错误：种子已删除或待审核")
             return
         }
@@ -170,10 +172,11 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     seeders := 0
     leechers := 0
     var self AppTorrentPeer
-    tr.db.Model(&torrent).Related(&torrent.Peers, "Peers")
+    var peers []AppTorrentPeer
+    tr.db.Where("torrent_id = ?", torrent.Id).First(&peers)
 
     i := 0
-    for _, peer := range torrent.Peers {
+    for _, peer := range peers {
         if peer.Seeder {
             seeders++
         } else {
@@ -182,7 +185,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
         if peer.PeerId == peer_id {
             self = peer
-            torrent.Peers = append(torrent.Peers[:i], torrent.Peers[i+1:]...)
+            peers = append(peers[:i], peers[i+1:]...)
         }
 
         i++
@@ -233,7 +236,11 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         var connectable bool
         _, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
 
-        connectable = err == nil
+        if err != nil {
+            connectable = false
+        } else {
+            connectable = true
+        }
 
         self = AppTorrentPeer{
             TorrentId: torrent.Id,
@@ -318,7 +325,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         MinInterval: 30,
         Complete: seeders,
         Incomplete: leechers,
-        Peers: torrent.Peers,
+        Peers: peers,
     }
 
     fmt.Println(rotio)

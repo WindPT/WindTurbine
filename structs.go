@@ -39,11 +39,9 @@ type PeerList struct {
 
 type AppTorrent struct {
     Id           int              `gorm:"AUTO_INCREMENT;primary_key"`
-    Thread       BbsThread        `gorm:"ForeignKey:tid;AssociationForeignKey:tid"`
     Tid          int
     InfoHash     string
     Size         int
-    Peers        []AppTorrentPeer `gorm:"ForeignKey:torrent_id;AssociationForeignKey:id"`
     Leechers     int
     Seeders      int
     Owner        int
@@ -91,14 +89,11 @@ type AppTorrentPeer struct {
 }
 
 type AppTorrentUser struct {
-    PwUser       User    `gorm:"ForeignKey:uid;AssociationForeignKey:uid"`
     Uid          int     `gorm:"primary_key"`
     Passkey      string
     UploadedMo   int
     DownloadedMo int
 }
-
-//db.Model(&user).Related(&pwuser, "PwUser")
 
 type User struct {
     Uid      int `gorm:"AUTO_INCREMENT;primary_key"`
