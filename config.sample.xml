@@ -6,4 +6,6 @@
     <!--Prefix of database tables-->
     <Listen>:8080</Listen>
     <!--Which port this application listen on-->
+    <Debug>true</Debug>
+    <!--Debuge Switch-->
 </Setting>

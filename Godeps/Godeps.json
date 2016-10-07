@@ -4,7 +4,10 @@
 	"GodepVersion": "v74",
 	"Deps": [
         {
-            "ImportPath": "github.com/go-sql-driver/mysql"
+            "ImportPath": "github.com/jinzhu/gorm"
+        },
+        {
+            "ImportPath": "github.com/kataras/iris"
         },
         {
             "ImportPath": "github.com/jackpal/bencode-go"

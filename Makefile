@@ -1,10 +1,10 @@
-WindTurbine: server.go
+WindTurbine: structs.go server.go
 	go build
 
 .PHONY: run
 
 run:
-	go run server.go
+	go run structs.go server.go
 
 .PHONY: clean
 
