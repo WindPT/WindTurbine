@@ -1,7 +1,7 @@
 WindTurbine
 ======
 
-An experimental tracker server designed to work with [WindPT](https://github.com/labs7in0/WindPT).
+An experimental tracker server designed to work with [WindPT](https://github.com/kinosang/WindPT).
 
 This project is designed as an alternative to the tracker implemented in WindPT.
 
@@ -17,7 +17,7 @@ This project is designed as an alternative to the tracker implemented in WindPT.
 Simple install the package to your $GOPATH with the go tool from shell:
 
 ```bash
-$ go get github.com/labs7in0/WindTurbine
+$ go get github.com/kinosang/WindTurbine
 ```
 
 And install dependency with doing a godep restore.
