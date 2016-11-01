@@ -107,7 +107,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     downloaded, _ := c.URLParamInt("downloaded")
     left, _       := c.URLParamInt("left")
 
-    seeder := left > 0
+    seeder := left <= 0
     state := "started"
 
     // Get client IP
