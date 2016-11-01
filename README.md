@@ -39,6 +39,35 @@ $ make
 $ ./WindTurbine
 ```
 
+## Expression
+
+This project use [Knetic/govaluate](https://github.com/Knetic/govaluate) (Arbitrary expression evaluation for golang) to support for credit expressions.
+
+Operators and types supported by `govaluate`:
+
+* Modifiers: `+` `-` `/` `*` `&` `|` `^` `**` `%` `>>` `<<`
+* Comparators: `>` `>=` `<` `<=` `==` `!=` `=~` `!~`
+* Logical ops: `||` `&&`
+* Numeric constants, as 64-bit floating point (`12345.678`)
+* String constants (single quotes: `'foobar'`)
+* Date constants (single quotes, using any permutation of RFC3339, ISO8601, ruby date, or unix date; date parsing is automatically tried with any string constant)
+* Boolean constants: `true` `false`
+* Parenthesis to control order of evaluation `(` `)`
+* Arrays (anything separated by `,` within parenthesis: `(1, 2, 'foo')`)
+* Prefixes: `!` `-` `~`
+* Ternary conditional: `?` `:`
+* Null coalescence: `??`
+
+Functions supported by this project:
+
+* Trigonometrics: `sin` `cos` `tan` `sinh` `cosh` `tanh` `arcsin` `arccos` `arctan` `arcsinh` `arccosh` `arctanh` `hypot`
+* Roots: `sqrt` `cbrt`
+* Logarithms: `lb` `ln` `lg`
+* Exponentials: `pow10` `pow`
+* Others: `abs` `ceil` `floor` `mod` `max` `min` `remainder`
+
+*Restricted to PHPWind, results will be convert into integer before saving.*
+
 ## TODO
 
 * [x] Peer Exchanging

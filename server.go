@@ -14,6 +14,7 @@ import (
     "github.com/jackpal/bencode-go"
     "github.com/jinzhu/gorm"
     "github.com/kataras/iris"
+    "github.com/kinosang/php_serialize"
     _ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
@@ -34,6 +35,7 @@ func main() {
 
     gorm.DefaultTableNameHandler = func (db *gorm.DB, defaultTableName string) string  {
         switch defaultTableName {
+            case "common_configs": defaultTableName = "common_config"
             case "user_bans": defaultTableName = "user_ban"
             case "users": defaultTableName = "user"
         }
@@ -50,7 +52,28 @@ func main() {
     var user_agents []AppTorrentAgent
     db.Order("id").Find(&user_agents)
 
-    tr := &TrackerResource {db: db, user_agents: user_agents}
+    var common_config CommonConfig
+    db.Where("name = \"app.torrent.credits\"").First(&common_config)
+
+    decoder := php_serialize.NewUnSerializer(common_config.Value)
+    exp_pvalue, err := decoder.Decode()
+
+    if err != nil {
+        panic(err)
+    }
+
+    exp_array, _ := exp_pvalue.(php_serialize.PhpArray)
+    credits := make(map[int]Credit)
+
+    for k, v := range exp_array {
+        v_array := v.(php_serialize.PhpArray)
+        v_enabled := v_array["enabled"].(string)
+        v_exp := v_array["exp"].(string)
+
+        credits[k.(int)] = Credit {enabled: v_enabled == "1", exp: v_exp}
+    }
+
+    tr := &TrackerResource {db: db, user_agents: user_agents, credits: credits}
 
     iris.OnError(iris.StatusNotFound, func(c *iris.Context) {
         berror(c, "错误：Passkey 不能为空")

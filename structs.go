@@ -15,6 +15,12 @@ type Setting struct {
 type TrackerResource struct {
     db          *gorm.DB
     user_agents []AppTorrentAgent
+    credits     map[int]Credit
+}
+
+type Credit struct {
+    enabled bool
+    exp     string
 }
 
 /*
@@ -36,6 +42,12 @@ type PeerList struct {
 /*
  * Structs for DB
  */
+
+type CommonConfig struct {
+    Name      string
+    Namespace string
+    Value     string
+}
 
 type AppTorrent struct {
     Id           int              `gorm:"AUTO_INCREMENT;primary_key"`
