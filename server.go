@@ -229,7 +229,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
                 self.Uploaded = uploaded
                 self.Downloaded = downloaded
                 self.Left = left
-                self.Seeder = seeder
                 self.Agent = user_agent
                 self.LastAction = time.Now()
 
@@ -244,7 +243,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
                 self.Uploaded = uploaded
                 self.Downloaded = downloaded
                 self.Left = left
-                self.Seeder = seeder
                 self.Agent = user_agent
                 self.FinishedAt = time.Now()
                 self.LastAction = time.Now()
@@ -257,16 +255,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             }
         }
     } else {
-        var connectable bool
-        _, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
-
-        if err != nil {
-            connectable = false
-        } else {
-            connectable = true
-        }
-
-        self = AppTorrentPeer{
+        self = AppTorrentPeer {
             TorrentId: torrent.Id,
             Uid: user.Uid,
             Ip: ip,
@@ -275,8 +264,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             Uploaded: uploaded,
             Downloaded: downloaded,
             Left: left,
-            Seeder: seeder,
-            Connectable: connectable,
             Agent: user_agent,
             StartedAt: time.Now(),
             LastAction: time.Now(),
@@ -284,6 +271,18 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
         tr.db.Create(&self)
     }
+
+    self.Seeder = seeder
+
+    conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
+    if err != nil {
+        self.Connectable = false
+    } else {
+        self.Connectable = true
+        defer conn.Close()
+    }
+
+    tr.db.Save(&self)
 
     // Update user's history of this torrent
     var rotio float64
