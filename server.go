@@ -15,6 +15,7 @@ import (
     "github.com/jinzhu/gorm"
     "github.com/kataras/iris"
     "github.com/kinosang/php_serialize"
+    "github.com/Knetic/govaluate"
     _ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
@@ -335,6 +336,49 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         rotio = 1
     }
 
+    // Update credits
+    parameters := make(map[string]interface{}, 17)
+
+    parameters["e"] = math.E
+    parameters["pi"] = math.Pi
+    parameters["phi"] = math.Phi
+
+    var seeding []AppTorrentPeer
+    tr.db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
+
+    var leeching []AppTorrentPeer
+    tr.db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
+
+    var published_torrents []AppTorrent
+    tr.db.Where("Owner = ?", user.Uid).Find(&published_torrents)
+
+    parameters["alive"] = time.Since(torrent.CreatedAt).Hours() / 24
+    parameters["seeders"] = seeders
+    parameters["leechers"] = leechers
+    parameters["size"] = torrent.Size
+    parameters["seeding"] = len(seeding)
+    parameters["leeching"] = len(leeching)
+    parameters["downloaded"] = uploaded_total
+    parameters["downloaded_add"] = downloaded_add
+    parameters["uploaded"] = uploaded_total
+    parameters["uploaded_add"] = uploaded_add
+    parameters["rotio"] = rotio
+    parameters["time"] = time.Since(self.StartedAt).Seconds()
+    parameters["time_la"] = time.Since(self.LastAction).Seconds()
+    parameters["torrents"] = len(published_torrents)
+
+    for k, v := range tr.credits {
+        if !v.enabled {
+            continue
+        }
+
+        expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
+
+        result, _ := expression.Evaluate(parameters)
+
+        fmt.Println(k, math.Ceil(result.(float64)))
+    }
+
     // Update torrent peers count
     torrent.Seeders = seeders
     torrent.Leechers = leechers
@@ -350,8 +394,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         Incomplete: leechers,
         Peers: peers,
     }
-
-    fmt.Println(rotio)
 
     c.StreamWriter(func (w *bufio.Writer) {
         bencode.Marshal(w, peer_list)

@@ -4,7 +4,7 @@ WindTurbine: structs.go server.go
 .PHONY: run
 
 run:
-	go run structs.go server.go
+	go run expressions.go structs.go server.go
 
 .PHONY: clean
 
