@@ -1,4 +1,5 @@
 config.xml
+vendor/
 
 # Compiled Object files
 *.slo
