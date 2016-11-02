@@ -24,7 +24,7 @@ func main() {
     xmlFile, err := os.Open("config.xml")
 
     if err != nil {
-        fmt.Println(time.Now().Format(time.RFC3339), "Error opening file:", err)
+        fmt.Println(time.Now().Format(time.RFC3339), "Faild to read config file:", err)
         return
     }
 
@@ -161,7 +161,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         return
     }
 
-
     // Check if user is banned
     var user_ban UserBan
     tr.db.Where("uid = ?", user.Uid).First(&user_ban)
@@ -287,7 +286,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
     tr.db.Save(&self)
 
-    // Update user's history of this torrent
+    // Update history
     var rotio float64
     uploaded_add := 0
     downloaded_add := 0

@@ -3,9 +3,7 @@ WindTurbine
 
 An experimental tracker server designed to work with [WindPT](https://github.com/kinosang/WindPT).
 
-This project is designed as an alternative to the tracker implemented in WindPT.
-
-** This project does not update users' credits (coming soon). **
+This project is designed as a replacement to the tracker implemented in WindPT.
 
 ## Requirements
 

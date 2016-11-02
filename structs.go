@@ -42,15 +42,8 @@ type PeerList struct {
 /*
  * Structs for DB
  */
-
-type CommonConfig struct {
-    Name      string
-    Namespace string
-    Value     string
-}
-
 type AppTorrent struct {
-    Id           int              `gorm:"AUTO_INCREMENT;primary_key"`
+    Id           int `gorm:"AUTO_INCREMENT;primary_key"`
     Tid          int
     InfoHash     string
     Size         int
@@ -62,7 +55,7 @@ type AppTorrent struct {
 }
 
 type AppTorrentAgent struct {
-    Id              int   `gorm:"AUTO_INCREMENT;primary_key"`
+    Id              int    `gorm:"AUTO_INCREMENT;primary_key"`
     Family          string
     PeerIdPattern   string
     AgentPattern    string
@@ -101,10 +94,22 @@ type AppTorrentPeer struct {
 }
 
 type AppTorrentUser struct {
-    Uid          int     `gorm:"primary_key"`
+    Uid          int `gorm:"primary_key"`
     Passkey      string
     UploadedMo   int
     DownloadedMo int
+}
+
+type BbsThread struct {
+    Tid           int `gorm:"AUTO_INCREMENT;primary_key"`
+    Disabled      int
+    CreatedUserid int
+}
+
+type CommonConfig struct {
+    Name      string
+    Namespace string
+    Value     string
 }
 
 type User struct {
@@ -132,9 +137,3 @@ type UserData struct {
 }
 
 type WindidUserData UserData
-
-type BbsThread struct {
-    Tid           int `gorm:"AUTO_INCREMENT;primary_key"`
-    Disabled      int
-    CreatedUserid int
-}
