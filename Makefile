@@ -1,4 +1,4 @@
-WindTurbine: structs.go server.go
+WindTurbine: expressions.go structs.go server.go
 	go build
 
 .PHONY: install
