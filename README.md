@@ -77,7 +77,7 @@ Functions supported by this project:
 
 * [x] Peer Exchanging
 * [x] Logging for Data Transfer and History
-* [ ] Credit
+* [x] Credit
 
 ## Donate us
 
