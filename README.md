@@ -20,7 +20,7 @@ Make a copy of `config.sample.xml`, rename it to `config.xml` and modify it.
 
 Then, run this application.
 
-## Compile manually
+## Compiling manually
 
 You can compile this project manually by yourself.
 
