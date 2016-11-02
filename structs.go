@@ -119,6 +119,20 @@ type UserBan struct {
     Reason string
 }
 
+type UserData struct {
+    Uid      int `gorm:"AUTO_INCREMENT;primary_key"`
+    Credit1  float64
+    Credit2  float64
+    Credit3  float64
+    Credit4  float64
+    Credit5  float64
+    Credit6  float64
+    Credit7  float64
+    Credit8  float64
+}
+
+type WindidUserData UserData
+
 type BbsThread struct {
     Tid           int `gorm:"AUTO_INCREMENT;primary_key"`
     Disabled      int

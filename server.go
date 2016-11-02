@@ -16,6 +16,7 @@ import (
     "github.com/kataras/iris"
     "github.com/kinosang/php_serialize"
     "github.com/Knetic/govaluate"
+    "github.com/oleiade/reflections"
     _ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
@@ -38,7 +39,9 @@ func main() {
         switch defaultTableName {
             case "common_configs": defaultTableName = "common_config"
             case "user_bans": defaultTableName = "user_ban"
+            case "user_datas": defaultTableName = "user_data"
             case "users": defaultTableName = "user"
+            case "windid_user_datas": defaultTableName = "windid_user_data"
         }
         return s.TablePrefix + defaultTableName;
     }
@@ -351,6 +354,12 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var published_torrents []AppTorrent
     tr.db.Where("Owner = ?", user.Uid).Find(&published_torrents)
 
+    var user_data UserData
+    tr.db.Where("uid = ?", user.Uid).Find(&user_data)
+
+    var windid_user_data WindidUserData
+    tr.db.Where("uid = ?", user.Uid).Find(&windid_user_data)
+
     parameters["alive"] = time.Since(torrent.CreatedAt).Hours() / 24
     parameters["seeders"] = seeders
     parameters["leechers"] = leechers
@@ -371,12 +380,20 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             continue
         }
 
+        credit_key := fmt.Sprintf("Credit%d", k)
+        parameters["credit"], _ = reflections.GetField(user_data, credit_key)
+
         expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
 
-        result, _ := expression.Evaluate(parameters)
+        delta, _ := expression.Evaluate(parameters)
+        result := parameters["credit"].(float64) + delta.(float64)
 
-        fmt.Println(k, math.Ceil(result.(float64)))
+        reflections.SetField(&user_data, credit_key, result)
+        reflections.SetField(&windid_user_data, credit_key, result)
     }
+
+    tr.db.Save(&user_data)
+    tr.db.Save(&windid_user_data)
 
     // Update torrent peers count
     torrent.Seeders = seeders

@@ -58,6 +58,13 @@ Operators and types supported by `govaluate`:
 * Ternary conditional: `?` `:`
 * Null coalescence: `??`
 
+Parameters supported by this project:
+
+* Constants: `e`, `pi`, `phi`
+* Torrent: `alive`, `seeders`, `leechers`, `size`
+* User: `seeding`, `leeching`, `torrents`, `credit`
+* Peer: `downloaded`, `downloaded_add`, `uploaded`, `uploaded_add`, `rotio`, `time`, `time_la`
+
 Functions supported by this project:
 
 * Trigonometrics: `sin` `cos` `tan` `sinh` `cosh` `tanh` `arcsin` `arccos` `arctan` `arcsinh` `arccosh` `arctanh` `hypot`
