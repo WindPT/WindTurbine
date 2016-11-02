@@ -1,26 +1,18 @@
 WindTurbine
-======
+===
 
 [![Build Status](https://travis-ci.org/kinosang/WindTurbine.svg)](https://travis-ci.org/kinosang/WindTurbine)
 
 An experimental tracker server designed to work with [WindPT](https://github.com/kinosang/WindPT).
 
-This project is designed as a replacement to the tracker implemented in WindPT.
-
 ## Requirements
 
- * Go 1.3 or higher
+ * Go 1.5 or higher
  * MySQL (4.1+) or MariaDB
 
 ## Installation
 
-Simple install the package to your $GOPATH with the go tool from shell:
-
-```bash
-$ go get github.com/kinosang/WindTurbine
-```
-
-And install dependency with doing a godep restore.
+Download the zip file provided in Release and unzip it.
 
 ## Usage
 
@@ -28,15 +20,15 @@ Make a copy of `config.sample.xml`, rename it to `config.xml` and modify it.
 
 Then, run this application.
 
-```bash
-$ make run
-```
+## Compile manually
 
-OR
+You can compile this project manually by yourself.
 
 ```bash
+$ go get github.com/kinosang/WindTurbine
+$ cd $GOPATH/src/github.com/kinosang/WindTurbine
+$ godep restore
 $ make
-$ ./WindTurbine
 ```
 
 ## Expression
