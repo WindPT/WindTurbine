@@ -12,11 +12,14 @@ before_install:
 install:
   - godep restore
 
+before_deploy:
+- zip -@ WindTurbine.zip WindTurbine config.sample.xml
+
 deploy:
   provider: releases
   api_key:
     secure: TSF6bnl2JYN72UQOORAJYL+CqIryP2gHVKt6grfveQ7d9rleAEoxlq6PWxbvTI4jZ5nrPpUcBUpWIJHNgVcs+bzLFtyh5THaLqm39uCgBbrW7M8rI26L8sBh/6nsdtGgdeQrO/cLu31QoTzbwuz1WfAVoCdCkOSZeXyT/CclH99qV6RYyQYqaD2wpRjrhA5O4fSsEkiPVuk0GaOogFlrQHx+C+lHnf6pa1KxEoN1A0UxxVfGX6K4y5g4WQDO5zT4bLeubkWOXK0G51XSvACDOZVIyLdjApaOFTwamPcD3S1tfvuxRWWvsCD5ljFvb2kSmx5BIBNwN80MzuBmrGIC27XLGOxyMerwKxB6DskNUO9PflKHDPI61DRq0FTy1fv70SFMSiAtUv9aJRT41NQh9iJJ0vC8dl+xcxrWIjU1GG6+l/ZcRqVx9V1VuGQsLKndGhja7SQ+X1slHl76fRq223sMOql7MFCd0vvvxVQ2V39CcFKao/LB1aPH3VhODDEyxwx6aXoTznvC/QPepgWsHOWQzKj9ftsgDbsNiyFlXL4cu8DWUty6rQy8zT2b4O8b1xjcwSUCsy+auEjBamzQkMJFNlZAIUrukL/NbUhQU37TAbwsFyz7X0E/u/VMle/nBCNAzgkMwAUjiHM6FqrKKBRWFbPrSIixjfjkCnrMEPw=
-  file: WindTurbine
+  file: WindTurbine.zip
   on:
     go: 1.7.3
     tags: true
