@@ -13,7 +13,7 @@ install:
   - godep restore
 
 before_deploy:
-- zip -@ WindTurbine.zip WindTurbine config.sample.xml
+- zip WindTurbine.zip WindTurbine config.sample.xml
 
 deploy:
   provider: releases
