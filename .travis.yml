@@ -1,4 +1,10 @@
 language: go
+
+install:
+  - export PATH=$PATH:$HOME/gopath/bin
+  - go get github.com/tools/godep
+  - godep restore
+
 deploy:
   provider: releases
   api_key:
