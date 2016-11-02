@@ -1,6 +1,11 @@
 WindTurbine: structs.go server.go
 	go build
 
+.PHONY: install
+
+install:
+	godep restore
+
 .PHONY: run
 
 run:

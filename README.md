@@ -1,6 +1,8 @@
 WindTurbine
 ======
 
+[![Build Status](https://travis-ci.org/kinosang/WindTurbine.svg)](https://travis-ci.org/kinosang/WindTurbine)
+
 An experimental tracker server designed to work with [WindPT](https://github.com/kinosang/WindPT).
 
 This project is designed as a replacement to the tracker implemented in WindPT.
