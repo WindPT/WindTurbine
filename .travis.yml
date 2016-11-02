@@ -1,8 +1,16 @@
 language: go
 
-install:
-  - export PATH=$PATH:$HOME/gopath/bin
+go:
+ - 1.3.3
+ - 1.4.2
+ - 1.5.1
+ - release
+ - tip
+
+before_install:
   - go get github.com/tools/godep
+
+install:
   - godep restore
 
 deploy:
