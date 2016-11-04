@@ -220,47 +220,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     }
 
     // Update peer info
-    if self.PeerId != "" {
-        // Check if already started
-        if self.PeerId != peer_id || self.Ip != ip {
-            berror(c, "错误：同一种子禁止多处下载")
-            return
-        }
-
-        switch event {
-            case "", "started": {
-                self.Port = port
-                self.Uploaded = uploaded
-                self.Downloaded = downloaded
-                self.Left = left
-                self.Seeder = seeder
-                self.Agent = user_agent
-                self.LastAction = time.Now()
-
-                tr.db.Save(&self)
-            }
-            case "stopped": {
-                tr.db.Delete(&self)
-                state = "stopped"
-            }
-            case "completed": {
-                self.Port = port
-                self.Uploaded = uploaded
-                self.Downloaded = downloaded
-                self.Left = left
-                self.Seeder = seeder
-                self.Agent = user_agent
-                self.FinishedAt = time.Now()
-                self.LastAction = time.Now()
-
-                tr.db.Save(&self)
-            }
-            default: {
-                berror(c, "错误：客户端发送未知状态")
-                return
-            }
-        }
-    } else {
+    if self.PeerId == "" {
         self = AppTorrentPeer {
             TorrentId: torrent.Id,
             Uid: user.Uid,
@@ -275,16 +235,57 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             StartedAt: time.Now(),
             LastAction: time.Now(),
         }
+    }
 
-        conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
-        if err != nil {
-            self.Connectable = false
-        } else {
-            self.Connectable = true
-            defer conn.Close()
+    conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
+    if err != nil {
+        self.Connectable = false
+    } else {
+        self.Connectable = true
+        defer conn.Close()
+    }
+
+    // Check if already started
+    if self.PeerId != peer_id || self.Ip != ip {
+        berror(c, "错误：同一种子禁止多处下载")
+        return
+    }
+
+    switch event {
+        case "", "started": {
+            self.Port = port
+            self.Uploaded = uploaded
+            self.Downloaded = downloaded
+            self.Left = left
+            self.Seeder = seeder
+            self.Agent = user_agent
+            self.LastAction = time.Now()
+
+            tr.db.Save(&self)
         }
+        case "stopped": {
+            if (self.Id != 0) {
+                tr.db.Delete(&self)
+            }
 
-        tr.db.Create(&self)
+            state = "stopped"
+        }
+        case "completed": {
+            self.Port = port
+            self.Uploaded = uploaded
+            self.Downloaded = downloaded
+            self.Left = left
+            self.Seeder = seeder
+            self.Agent = user_agent
+            self.FinishedAt = time.Now()
+            self.LastAction = time.Now()
+
+            tr.db.Save(&self)
+        }
+        default: {
+            berror(c, "错误：客户端发送未知状态")
+            return
+        }
     }
 
     // Update history
