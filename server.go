@@ -1,7 +1,7 @@
 package main
 
 import (
-    "bufio"
+    "bytes"
     "encoding/xml"
     "fmt"
     "io/ioutil"
@@ -412,14 +412,19 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         Peers: peers,
     }
 
-    c.StreamWriter(func (w *bufio.Writer) {
-        bencode.Marshal(w, peer_list)
-    })
+    buf := new(bytes.Buffer)
+
+    bencode.Marshal(buf, peer_list)
+
+    c.Text(200, buf.String())
 }
 
 func berror(c *iris.Context, msg string){
-    c.StreamWriter(func (w *bufio.Writer) {
-        var err = Error{msg}
-        bencode.Marshal(w, err)
-    })
+    err := Error{msg}
+
+    buf := new(bytes.Buffer)
+
+    bencode.Marshal(buf, err)
+
+    c.Text(200, buf.String())
 }
