@@ -53,6 +53,8 @@ func main() {
         panic(err)
     }
 
+    defer db.Close()
+
     var user_agents []AppTorrentAgent
     db.Order("id").Find(&user_agents)
 
