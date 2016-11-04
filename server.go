@@ -112,7 +112,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     downloaded, _ := c.URLParamInt("downloaded")
     left, _       := c.URLParamInt("left")
 
-    seeder := left <= 0
     state := "started"
 
     // Get client IP
@@ -230,11 +229,18 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             Uploaded: uploaded,
             Downloaded: downloaded,
             Left: left,
-            Seeder: seeder,
             Agent: user_agent,
             StartedAt: time.Now(),
             LastAction: time.Now(),
         }
+    }
+
+    self.Seeder = left <= 0
+
+    if self.Seeder {
+        seeders++
+    } else {
+        leechers++
     }
 
     conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
@@ -257,7 +263,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             self.Uploaded = uploaded
             self.Downloaded = downloaded
             self.Left = left
-            self.Seeder = seeder
             self.Agent = user_agent
             self.LastAction = time.Now()
 
@@ -275,7 +280,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             self.Uploaded = uploaded
             self.Downloaded = downloaded
             self.Left = left
-            self.Seeder = seeder
             self.Agent = user_agent
             self.FinishedAt = time.Now()
             self.LastAction = time.Now()
