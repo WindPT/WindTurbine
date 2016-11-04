@@ -233,6 +233,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
                 self.Uploaded = uploaded
                 self.Downloaded = downloaded
                 self.Left = left
+                self.Seeder = seeder
                 self.Agent = user_agent
                 self.LastAction = time.Now()
 
@@ -247,6 +248,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
                 self.Uploaded = uploaded
                 self.Downloaded = downloaded
                 self.Left = left
+                self.Seeder = seeder
                 self.Agent = user_agent
                 self.FinishedAt = time.Now()
                 self.LastAction = time.Now()
@@ -268,25 +270,22 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             Uploaded: uploaded,
             Downloaded: downloaded,
             Left: left,
+            Seeder: seeder,
             Agent: user_agent,
             StartedAt: time.Now(),
             LastAction: time.Now(),
         }
 
+        conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
+        if err != nil {
+            self.Connectable = false
+        } else {
+            self.Connectable = true
+            defer conn.Close()
+        }
+
         tr.db.Create(&self)
     }
-
-    self.Seeder = seeder
-
-    conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
-    if err != nil {
-        self.Connectable = false
-    } else {
-        self.Connectable = true
-        defer conn.Close()
-    }
-
-    tr.db.Save(&self)
 
     // Update history
     var rotio float64
