@@ -200,7 +200,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     leechers := 0
     var self AppTorrentPeer
     var peers []AppTorrentPeer
-    tr.db.Where("torrent_id = ?", torrent.Id).First(&peers)
+    tr.db.Where("torrent_id = ?", torrent.Id).Find(&peers)
 
     i := 0
     for _, peer := range peers {
@@ -219,20 +219,18 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     }
 
     // Update peer info
-    if self.PeerId == "" {
-        self = AppTorrentPeer {
-            TorrentId: torrent.Id,
-            Uid: user.Uid,
-            Ip: ip,
-            PeerId: peer_id,
-            Port: port,
-            Uploaded: uploaded,
-            Downloaded: downloaded,
-            Left: left,
-            Agent: user_agent,
-            StartedAt: time.Now(),
-            LastAction: time.Now(),
-        }
+    if (AppTorrentPeer{}) == self {
+        self.TorrentId = torrent.Id
+        self.Uid = user.Uid
+        self.Ip = ip
+        self.PeerId = peer_id
+        self.Port = port
+        self.Uploaded = uploaded
+        self.Downloaded = downloaded
+        self.Left = left
+        self.Agent = user_agent
+        self.StartedAt = time.Now()
+        self.LastAction = time.Now()
     }
 
     self.Seeder = left <= 0
