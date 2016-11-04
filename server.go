@@ -149,7 +149,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var user AppTorrentUser
     tr.db.Where("passkey = ?", passkey).First(&user)
 
-    if user.Passkey != passkey {
+    if (AppTorrentUser{}) == user {
         berror(c, "错误：无效的 passkey，请尝试重新下载种子")
         return
     }
@@ -157,7 +157,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var pwuser User
     tr.db.Where("uid = ?", user.Uid).First(&pwuser)
 
-    if user.Uid != pwuser.Uid {
+    if (User{}) == pwuser {
         berror(c, "错误：用户不存在，请尝试重新下载种子")
         return
     }
@@ -166,7 +166,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var user_ban UserBan
     tr.db.Where("uid = ?", user.Uid).First(&user_ban)
 
-    if user_ban.Uid == user.Uid {
+    if (UserBan{}) != user_ban {
         berror(c, fmt.Sprintf("错误：用户已被封禁 %s", user_ban.Reason))
         return
     }
@@ -175,7 +175,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var torrent AppTorrent
     tr.db.Where("info_hash = ?", info_hash).First(&torrent)
 
-    if torrent.InfoHash != info_hash {
+    if (AppTorrent{}) == torrent {
         berror(c, "错误：种子信息未注册，可能是已被删除")
         return
     }
@@ -183,7 +183,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var bbs_thread BbsThread
     tr.db.Where("tid = ?", torrent.Tid).First(&bbs_thread)
 
-    if bbs_thread.Tid != torrent.Tid {
+    if (BbsThread{}) == bbs_thread {
         berror(c, "错误：种子不存在")
         return
     }
@@ -300,7 +300,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     var history AppTorrentHistory
     tr.db.Where("torrent_id = ? AND uid = ?", torrent.Id, user.Uid).First(&history)
 
-    if history.Uid != user.Uid || history.TorrentId != torrent.Id {
+    if (AppTorrentHistory{}) == history {
         history = AppTorrentHistory{
             Uid: user.Uid,
             TorrentId: torrent.Id,
