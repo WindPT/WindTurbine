@@ -79,6 +79,7 @@ type AppTorrentPeer struct {
     Id          int       `gorm:"AUTO_INCREMENT;primary_key" bencode:"-"`
     TorrentId   int       `bencode:"-"`
     Uid         int       `bencode:"-"`
+    Username    string    `bencode:"-"`
     Ip          string    `bencode:"ip"`
     PeerId      string    `bencode:"peer id"`
     Port        int       `bencode:"port"`

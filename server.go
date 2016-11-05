@@ -222,6 +222,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     if (AppTorrentPeer{}) == self {
         self.TorrentId = torrent.Id
         self.Uid = user.Uid
+        self.Username = pwuser.Username
         self.Ip = ip
         self.PeerId = peer_id
         self.Port = port
