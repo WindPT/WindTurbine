@@ -210,7 +210,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             leechers++
         }
 
-        if peer.PeerId == peer_id {
+        if peer.Uid == user.Uid {
             self = peer
             peers = append(peers[:i], peers[i+1:]...)
         }
