@@ -1,9 +1,6 @@
 package main
 
-import (
-    "time"
-    "github.com/jinzhu/gorm"
-)
+import "time"
 
 type Setting struct {
     DSN         string
@@ -13,7 +10,7 @@ type Setting struct {
 }
 
 type TrackerResource struct {
-    db          *gorm.DB
+    setting     Setting
     user_agents []AppTorrentAgent
     credits     map[int]Credit
 }

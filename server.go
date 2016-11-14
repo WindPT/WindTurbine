@@ -79,7 +79,7 @@ func main() {
         credits[k.(int)] = Credit {enabled: v_enabled == "1", exp: v_exp}
     }
 
-    tr := &TrackerResource {db: db, user_agents: user_agents, credits: credits}
+    tr := &TrackerResource {setting: s, user_agents: user_agents, credits: credits}
 
     iris.OnError(iris.StatusNotFound, func(c *iris.Context) {
         berror(c, "错误：Passkey 不能为空")
@@ -145,9 +145,19 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         return
     }
 
+    db, err := gorm.Open("mysql", tr.setting.DSN)
+    db.LogMode(tr.setting.Debug)
+
+    if err != nil {
+        berror(c, "错误：数据库连接失败")
+        return
+    }
+
+    defer db.Close()
+
     // Get user info by passkey
     var user AppTorrentUser
-    tr.db.Where("passkey = ?", passkey).First(&user)
+    db.Where("passkey = ?", passkey).First(&user)
 
     if (AppTorrentUser{}) == user {
         berror(c, "错误：无效的 passkey，请尝试重新下载种子")
@@ -155,7 +165,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     }
 
     var pwuser User
-    tr.db.Where("uid = ?", user.Uid).First(&pwuser)
+    db.Where("uid = ?", user.Uid).First(&pwuser)
 
     if (User{}) == pwuser {
         berror(c, "错误：用户不存在，请尝试重新下载种子")
@@ -164,7 +174,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
     // Check if user is banned
     var user_ban UserBan
-    tr.db.Where("uid = ?", user.Uid).First(&user_ban)
+    db.Where("uid = ?", user.Uid).First(&user_ban)
 
     if (UserBan{}) != user_ban {
         berror(c, fmt.Sprintf("错误：用户已被封禁 %s", user_ban.Reason))
@@ -173,7 +183,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
     // Get torrent info by info_hash
     var torrent AppTorrent
-    tr.db.Where("info_hash = ?", info_hash).First(&torrent)
+    db.Where("info_hash = ?", info_hash).First(&torrent)
 
     if (AppTorrent{}) == torrent {
         berror(c, "错误：种子信息未注册，可能是已被删除")
@@ -181,7 +191,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     }
 
     var bbs_thread BbsThread
-    tr.db.Where("tid = ?", torrent.Tid).First(&bbs_thread)
+    db.Where("tid = ?", torrent.Tid).First(&bbs_thread)
 
     if (BbsThread{}) == bbs_thread {
         berror(c, "错误：种子不存在")
@@ -200,7 +210,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     leechers := 0
     var self AppTorrentPeer
     var peers []AppTorrentPeer
-    tr.db.Where("torrent_id = ?", torrent.Id).Find(&peers)
+    db.Where("torrent_id = ?", torrent.Id).Find(&peers)
 
     i := 0
     for _, peer := range peers {
@@ -265,11 +275,11 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             self.Agent = user_agent
             self.LastAction = time.Now()
 
-            tr.db.Save(&self)
+            db.Save(&self)
         }
         case "stopped": {
             if (self.Id != 0) {
-                tr.db.Delete(&self)
+                db.Delete(&self)
             }
 
             state = "stopped"
@@ -283,7 +293,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             self.FinishedAt = time.Now()
             self.LastAction = time.Now()
 
-            tr.db.Save(&self)
+            db.Save(&self)
         }
         default: {
             berror(c, "错误：客户端发送未知状态")
@@ -299,7 +309,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     downloaded_total := downloaded
 
     var history AppTorrentHistory
-    tr.db.Where("torrent_id = ? AND uid = ?", torrent.Id, user.Uid).First(&history)
+    db.Where("torrent_id = ? AND uid = ?", torrent.Id, user.Uid).First(&history)
 
     if (AppTorrentHistory{}) == history {
         history = AppTorrentHistory{
@@ -313,7 +323,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             State: state,
         }
 
-        tr.db.Create(&history)
+        db.Create(&history)
     } else {
         uploaded_add = int(math.Max(0, float64(uploaded - history.UploadedLast)))
         downloaded_add = int(math.Max(0, float64(downloaded - history.DownloadedLast)))
@@ -333,7 +343,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             history.DownloadedLast = 0
         }
 
-        tr.db.Save(&history)
+        db.Save(&history)
     }
 
     if downloaded_total != 0 {
@@ -350,19 +360,19 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     parameters["phi"] = math.Phi
 
     var seeding []AppTorrentPeer
-    tr.db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
+    db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
 
     var leeching []AppTorrentPeer
-    tr.db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
+    db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
 
     var published_torrents []AppTorrent
-    tr.db.Where("Owner = ?", user.Uid).Find(&published_torrents)
+    db.Where("Owner = ?", user.Uid).Find(&published_torrents)
 
     var user_data UserData
-    tr.db.Where("uid = ?", user.Uid).Find(&user_data)
+    db.Where("uid = ?", user.Uid).Find(&user_data)
 
     var windid_user_data WindidUserData
-    tr.db.Where("uid = ?", user.Uid).Find(&windid_user_data)
+    db.Where("uid = ?", user.Uid).Find(&windid_user_data)
 
     parameters["alive"] = time.Since(torrent.CreatedAt).Hours() / 24
     parameters["seeders"] = seeders
@@ -396,15 +406,15 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         reflections.SetField(&windid_user_data, credit_key, result)
     }
 
-    tr.db.Save(&user_data)
-    tr.db.Save(&windid_user_data)
+    db.Save(&user_data)
+    db.Save(&windid_user_data)
 
     // Update torrent peers count
     torrent.Seeders = seeders
     torrent.Leechers = leechers
     torrent.UpdatedAt = time.Now()
 
-    tr.db.Save(&torrent)
+    db.Save(&torrent)
 
     // Output peers list to client
     peer_list := PeerList{
