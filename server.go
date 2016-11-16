@@ -24,7 +24,7 @@ func main() {
     xmlFile, err := os.Open("config.xml")
 
     if err != nil {
-        fmt.Println(time.Now().Format(time.RFC3339), "Faild to read config file:", err)
+        fmt.Println(time.Local().Format(time.RFC3339), "Faild to read config file:", err)
         return
     }
 
@@ -240,8 +240,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         self.Downloaded = downloaded
         self.Left = left
         self.Agent = user_agent
-        self.StartedAt = time.Now()
-        self.LastAction = time.Now()
+        self.StartedAt = time.Local()
+        self.LastAction = time.Local()
     }
 
     self.Seeder = left <= 0
@@ -273,7 +273,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             self.Downloaded = downloaded
             self.Left = left
             self.Agent = user_agent
-            self.LastAction = time.Now()
+            self.LastAction = time.Local()
 
             db.Save(&self)
         }
@@ -290,8 +290,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
             self.Downloaded = downloaded
             self.Left = left
             self.Agent = user_agent
-            self.FinishedAt = time.Now()
-            self.LastAction = time.Now()
+            self.FinishedAt = time.Local()
+            self.LastAction = time.Local()
 
             db.Save(&self)
         }
@@ -412,7 +412,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
     // Update torrent peers count
     torrent.Seeders = seeders
     torrent.Leechers = leechers
-    torrent.UpdatedAt = time.Now()
+    torrent.UpdatedAt = time.Local()
 
     db.Save(&torrent)
 
