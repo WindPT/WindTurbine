@@ -5,6 +5,7 @@ import "time"
 type Setting struct {
     DSN         string
     TablePrefix string
+    Timezone    string
     Listen      string
     Debug       bool
 }

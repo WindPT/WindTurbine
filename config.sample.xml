@@ -4,6 +4,8 @@
     <!--More info about DSN see https://github.com/go-sql-driver/mysql/blob/master/README.md-->
     <TablePrefix>pw_</TablePrefix>
     <!--Prefix of database tables-->
+    <Timezone>Asia/Shanghai</Timezone>
+    <!--Timezone match the one you set in php.ini-->
     <Listen>:8080</Listen>
     <!--Which port this application listen on-->
     <Debug>true</Debug>
