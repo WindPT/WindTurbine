@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Setting>
-    <DSN><![CDATA[root:root@tcp(localhost:3306)/windpt?charset=utf8&parseTime=true]]></DSN>
+    <DSN><![CDATA[root:root@tcp(localhost:3306)/windpt?charset=utf8&parseTime=true&loc=Asia%2FShanghai]]></DSN>
     <!--More info about DSN see https://github.com/go-sql-driver/mysql/blob/master/README.md-->
     <TablePrefix>pw_</TablePrefix>
     <!--Prefix of database tables-->
