@@ -24,8 +24,7 @@ func main() {
     xmlFile, err := os.Open("config.xml")
 
     if err != nil {
-        fmt.Println(time.Now().Format(time.RFC3339), "Faild to read config file:", err)
-        return
+        panic(err)
     }
 
     defer xmlFile.Close()
