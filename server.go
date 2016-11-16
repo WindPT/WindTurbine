@@ -228,10 +228,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
         i++
     }
 
-    loc, err := time.LoadLocation(tr.setting.Timezone)
-    if err != nil {
-        loc, _ = time.LoadLocation("UTC")
-    }
+    loc, _ := time.LoadLocation(tr.setting.Timezone)
 
     // Update peer info
     if (AppTorrentPeer{}) == self {
