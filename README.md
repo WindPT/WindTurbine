@@ -65,7 +65,7 @@ Functions supported by this project:
 * Exponentials: `pow10` `pow`
 * Others: `abs` `ceil` `floor` `mod` `max` `min` `remainder`
 
-*Restricted to PHPWind, results will be convert into integer before saving.*
+*Restricted to PHPWind, you should change types of all fields named `credit(n)` of `pw_user_data` table and `pw_windid_user_data` table in your databse from `int` to `double`.*
 
 ## TODO
 
