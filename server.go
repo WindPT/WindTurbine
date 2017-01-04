@@ -386,7 +386,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	var windid_user_data WindidUserData
 	db.Where("uid = ?", user.Uid).Find(&windid_user_data)
 
-	parameters["alive"] = time.Since(torrent.CreatedAt).Hours() / 24
+	parameters["alive"] = int(time.Since(torrent.CreatedAt).Hours() / 24)
 	parameters["seeders"] = seeders
 	parameters["leechers"] = leechers
 	parameters["size"] = torrent.Size
@@ -397,8 +397,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	parameters["uploaded"] = uploaded_total
 	parameters["uploaded_add"] = uploaded_add
 	parameters["rotio"] = rotio
-	parameters["time"] = time.Since(self.StartedAt).Seconds()
-	parameters["time_la"] = time.Since(last_action).Seconds()
+	parameters["time"] = int(time.Since(self.StartedAt).Seconds())
+	parameters["time_la"] = int(time.Since(last_action).Seconds())
 	parameters["time_leeched"] = history.Leeched
 	parameters["time_seeded"] = history.Seeded
 	parameters["torrents"] = len(published_torrents)
