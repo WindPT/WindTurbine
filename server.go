@@ -268,6 +268,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		return
 	}
 
+	last_action := self.LastAction
+
 	switch event {
 	case "", "started":
 		{
@@ -388,7 +390,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	parameters["uploaded_add"] = uploaded_add
 	parameters["rotio"] = rotio
 	parameters["time"] = time.Since(self.StartedAt).Seconds()
-	parameters["time_la"] = time.Since(self.LastAction).Seconds()
+	parameters["time_la"] = time.Since(last_action).Seconds()
 	parameters["torrents"] = len(published_torrents)
 
 	for k, v := range tr.credits {
