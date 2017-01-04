@@ -55,7 +55,7 @@ Parameters supported by this project:
 * Constants: `e`, `pi`, `phi`
 * Torrent: `alive`, `seeders`, `leechers`, `size`
 * User: `seeding`, `leeching`, `torrents`, `credit`
-* Peer: `downloaded`, `downloaded_add`, `uploaded`, `uploaded_add`, `rotio`, `time`, `time_la`
+* Peer: `downloaded`, `downloaded_add`, `uploaded`, `uploaded_add`, `rotio`, `time`, `time_la`, `time_leeched`, `time_seeded`
 
 Functions supported by this project:
 

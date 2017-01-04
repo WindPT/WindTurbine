@@ -326,6 +326,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 			Downloaded:     downloaded,
 			DownloadedLast: downloaded,
 			Left:           left,
+			Leeched:        0,
+			Seeded:         0,
 		}
 
 		db.Create(&history)
@@ -342,6 +344,12 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		history.DownloadedLast = downloaded
 		history.Left = left
 
+		if self.Seeder {
+			history.Seeded += int(time.Since(last_action).Seconds())
+		} else {
+			history.Leeched += int(time.Since(last_action).Seconds())
+		}
+
 		if event == "stopped" {
 			history.UploadedLast = 0
 			history.DownloadedLast = 0
@@ -357,7 +365,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	}
 
 	// Update credits
-	parameters := make(map[string]interface{}, 17)
+	parameters := make(map[string]interface{}, 19)
 
 	parameters["e"] = math.E
 	parameters["pi"] = math.Pi
@@ -391,6 +399,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	parameters["rotio"] = rotio
 	parameters["time"] = time.Since(self.StartedAt).Seconds()
 	parameters["time_la"] = time.Since(last_action).Seconds()
+	parameters["time_leeched"] = history.Leeched
+	parameters["time_seeded"] = history.Seeded
 	parameters["torrents"] = len(published_torrents)
 
 	for k, v := range tr.credits {
