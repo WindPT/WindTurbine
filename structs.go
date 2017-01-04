@@ -69,7 +69,6 @@ type AppTorrentHistory struct {
 	Downloaded     int
 	DownloadedLast int
 	Left           int
-	State          string
 }
 
 type AppTorrentPeer struct {

@@ -116,8 +116,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	downloaded, _ := c.URLParamInt("downloaded")
 	left, _ := c.URLParamInt("left")
 
-	state := "started"
-
 	// Get client IP
 	ips := strings.Split(c.RequestHeader("X-FORWARDED-FOR"), ", ")
 	ip := ips[0]
@@ -287,8 +285,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 			if self.Id != 0 {
 				db.Delete(&self)
 			}
-
-			state = "stopped"
 		}
 	case "completed":
 		{
@@ -328,7 +324,6 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 			Downloaded:     downloaded,
 			DownloadedLast: downloaded,
 			Left:           left,
-			State:          state,
 		}
 
 		db.Create(&history)
@@ -344,9 +339,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		history.Downloaded = downloaded_total
 		history.DownloadedLast = downloaded
 		history.Left = left
-		history.State = state
 
-		if state == "stopped" {
+		if event == "stopped" {
 			history.UploadedLast = 0
 			history.DownloadedLast = 0
 		}
