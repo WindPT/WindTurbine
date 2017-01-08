@@ -87,8 +87,11 @@ func main() {
 		credits[k.(int)] = Credit{enabled: v_enabled == "1", exp: v_exp}
 	}
 
+	// Load logging switch
+	db.Where("name = \"app.torrent.log\"").First(&common_config)
+
 	// Prepare TrackerResource
-	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits, log: common_config.Value}
+	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits, log: common_config.Value == "1"}
 
 	// Initialize IRIS
 	iris.OnError(iris.StatusNotFound, func(c *iris.Context) {
@@ -217,6 +220,24 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 			berror(c, "错误：种子已删除或待审核")
 			return
 		}
+	}
+
+	// Log announcement
+	if tr.log {
+		db.Create(&AppTorrentLog{
+			Uid:         user.Uid,
+			TorrentId:   torrent.Id,
+			Agent:       user_agent,
+			Passkey:     passkey,
+			InfoHash:    info_hash,
+			PeerId:      peer_id,
+			Ip:          ip,
+			Port:        port,
+			Uploaded:    uploaded,
+			Downloaded:  downloaded,
+			Left:        left,
+			AnnouncedAt: time.Now(),
+		})
 	}
 
 	// Get peers list by torrent

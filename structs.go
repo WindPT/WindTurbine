@@ -13,6 +13,7 @@ type TrackerResource struct {
 	setting     Setting
 	user_agents []AppTorrentAgent
 	credits     map[int]Credit
+	log         bool
 }
 
 type Credit struct {
@@ -69,6 +70,22 @@ type AppTorrentHistory struct {
 	Left       int
 	Leeched    int
 	Seeded     int
+}
+
+type AppTorrentLog struct {
+	Id          int `gorm:"AUTO_INCREMENT;primary_key"`
+	Uid         int
+	TorrentId   int
+	Agent       string
+	Passkey     string
+	InfoHash    string
+	PeerId      string
+	Ip          string
+	Port        int
+	Uploaded    int
+	Downloaded  int
+	Left        int
+	AnnouncedAt time.Time
 }
 
 type AppTorrentPeer struct {
