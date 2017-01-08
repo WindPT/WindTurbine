@@ -62,25 +62,28 @@ func main() {
 	var user_agents []AppTorrentAgent
 	db.Order("id").Find(&user_agents)
 
-	var common_config CommonConfig
-	db.Where("name = \"app.torrent.credits\"").First(&common_config)
-
-	decoder := php_serialize.NewUnSerializer(common_config.Value)
-	exp_pvalue, err := decoder.Decode()
-
-	if err != nil {
-		panic(err)
-	}
-
-	exp_array, _ := exp_pvalue.(php_serialize.PhpArray)
 	credits := make(map[int]Credit)
 
-	for k, v := range exp_array {
-		v_array := v.(php_serialize.PhpArray)
-		v_enabled := v_array["enabled"].(string)
-		v_exp := v_array["exp"].(string)
+	if s.Credits {
+		var common_config CommonConfig
+		db.Where("name = \"app.torrent.credits\"").First(&common_config)
 
-		credits[k.(int)] = Credit{enabled: v_enabled == "1", exp: v_exp}
+		decoder := php_serialize.NewUnSerializer(common_config.Value)
+		exp_pvalue, err := decoder.Decode()
+
+		if err != nil {
+			panic(err)
+		}
+
+		exp_array, _ := exp_pvalue.(php_serialize.PhpArray)
+
+		for k, v := range exp_array {
+			v_array := v.(php_serialize.PhpArray)
+			v_enabled := v_array["enabled"].(string)
+			v_exp := v_array["exp"].(string)
+
+			credits[k.(int)] = Credit{enabled: v_enabled == "1", exp: v_exp}
+		}
 	}
 
 	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits}
@@ -317,7 +320,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		db.Save(&history)
 	}
 
-	if tr.setting.Credits {
+	if len(tr.credits) > 0 {
 		// Calculate rotio
 		if history.Downloaded != 0 {
 			rotio = math.Floor(float64(history.Uploaded/history.Downloaded*100)+0.5) / 100
