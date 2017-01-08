@@ -61,16 +61,14 @@ type AppTorrentAgent struct {
 }
 
 type AppTorrentHistory struct {
-	Id             int `gorm:"AUTO_INCREMENT;primary_key"`
-	Uid            int
-	TorrentId      int
-	Uploaded       int
-	UploadedLast   int
-	Downloaded     int
-	DownloadedLast int
-	Left           int
-	Leeched        int
-	Seeded         int
+	Id         int `gorm:"AUTO_INCREMENT;primary_key"`
+	Uid        int
+	TorrentId  int
+	Uploaded   int
+	Downloaded int
+	Left       int
+	Leeched    int
+	Seeded     int
 }
 
 type AppTorrentPeer struct {
@@ -93,10 +91,8 @@ type AppTorrentPeer struct {
 }
 
 type AppTorrentUser struct {
-	Uid          int `gorm:"primary_key"`
-	Passkey      string
-	UploadedMo   int
-	DownloadedMo int
+	Uid     int `gorm:"primary_key"`
+	Passkey string
 }
 
 type BbsThread struct {

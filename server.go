@@ -95,7 +95,10 @@ func main() {
 }
 
 func (tr *TrackerResource) Announcement(c *iris.Context) {
+	// Get User-Agent
 	user_agent := string(c.UserAgent())
+
+	// Get Passkey from url
 	passkey := c.Param("passkey")
 
 	// Check parameters
@@ -108,6 +111,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		}
 	}
 
+	// Get URL parameters
 	event := c.URLParam("event")
 	info_hash := c.URLParam("info_hash")
 	peer_id := c.URLParam("peer_id")
@@ -128,7 +132,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		return
 	}
 
-	// Check UserAgent
+	// Check if User-Agent allowed
 	allowed := false
 	for _, v := range tr.user_agents {
 		if allowed, _ = regexp.MatchString(v.AgentPattern, user_agent); allowed {
@@ -147,6 +151,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		return
 	}
 
+	// Start Database connection
 	db, err := gorm.Open("mysql", tr.setting.DSN)
 	db.LogMode(tr.setting.Debug)
 
@@ -166,6 +171,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		return
 	}
 
+	// Check if BBS user existed
 	var pwuser User
 	db.Where("uid = ?", user.Uid).First(&pwuser)
 
@@ -174,7 +180,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		return
 	}
 
-	// Check if user is banned
+	// Check if BBS user is banned
 	var user_ban UserBan
 	db.Where("uid = ?", user.Uid).First(&user_ban)
 
@@ -208,30 +214,32 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	}
 
 	// Get peers list by torrent
-	seeders := 0
-	leechers := 0
+	torrent.Seeders = 0
+	torrent.Leechers = 0
 	var self AppTorrentPeer
 	var peers []AppTorrentPeer
 	db.Where("torrent_id = ?", torrent.Id).Find(&peers)
 
 	i := 0
 	for _, peer := range peers {
-		if peer.Seeder {
-			seeders++
-		} else {
-			leechers++
-		}
-
 		if peer.Uid == user.Uid {
+			// Get self from peers list by Uid
 			self = peer
 			peers = append(peers[:i], peers[i+1:]...)
+		} else {
+			// Count seeders and leechers
+			if peer.Seeder {
+				torrent.Seeders++
+			} else {
+				torrent.Leechers++
+			}
 		}
 
 		i++
 	}
 
-	// Update peer info
 	if (AppTorrentPeer{}) == self {
+		// Create peer if not exist
 		self.TorrentId = torrent.Id
 		self.Uid = user.Uid
 		self.Username = pwuser.Username
@@ -246,14 +254,16 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		self.LastAction = time.Now()
 	}
 
+	// Check if self is seeder
 	self.Seeder = left <= 0
 
 	if self.Seeder {
-		seeders++
+		torrent.Seeders++
 	} else {
-		leechers++
+		torrent.Leechers++
 	}
 
+	// Check if peer is connectable
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ip, port))
 	if err != nil {
 		self.Connectable = false
@@ -268,8 +278,113 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		return
 	}
 
-	last_action := self.LastAction
+	// Get history by torrent ID and Uid
+	var history AppTorrentHistory
+	db.Where("torrent_id = ? AND uid = ?", torrent.Id, user.Uid).First(&history)
 
+	var rotio float64
+	var uploaded_add, downloaded_add int
+
+	if (AppTorrentHistory{}) == history {
+		// Create history if not exist
+		history = AppTorrentHistory{
+			Uid:        user.Uid,
+			TorrentId:  torrent.Id,
+			Uploaded:   uploaded,
+			Downloaded: downloaded,
+			Left:       left,
+			Leeched:    0,
+			Seeded:     0,
+		}
+
+		db.Create(&history)
+	} else {
+		// Calculate increment
+		uploaded_add = int(math.Max(0, float64(uploaded-self.Uploaded)))
+		downloaded_add = int(math.Max(0, float64(downloaded-self.Downloaded)))
+
+		history.Uploaded = history.Uploaded + uploaded_add
+		history.Downloaded = history.Downloaded + downloaded_add
+
+		history.Left = left
+
+		if self.Seeder {
+			history.Seeded += int(time.Since(self.LastAction).Seconds())
+		} else {
+			history.Leeched += int(time.Since(self.LastAction).Seconds())
+		}
+
+		db.Save(&history)
+	}
+
+	// Calculate rotio
+	if history.Downloaded != 0 {
+		rotio = math.Floor(float64(history.Uploaded/history.Downloaded*100)+0.5) / 100
+	} else {
+		rotio = 1
+	}
+
+	// Calculate increment of credits
+	parameters := make(map[string]interface{}, 19)
+
+	parameters["e"] = math.E
+	parameters["pi"] = math.Pi
+	parameters["phi"] = math.Phi
+
+	var seeding []AppTorrentPeer
+	db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
+
+	var leeching []AppTorrentPeer
+	db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
+
+	var published_torrents []AppTorrent
+	db.Where("Owner = ?", user.Uid).Find(&published_torrents)
+
+	var user_data UserData
+	db.Where("uid = ?", user.Uid).Find(&user_data)
+
+	var windid_user_data WindidUserData
+	db.Where("uid = ?", user.Uid).Find(&windid_user_data)
+
+	parameters["alive"] = int(time.Since(torrent.CreatedAt).Hours() / 24)
+	parameters["seeders"] = torrent.Seeders
+	parameters["leechers"] = torrent.Leechers
+	parameters["size"] = torrent.Size
+	parameters["seeding"] = len(seeding)
+	parameters["leeching"] = len(leeching)
+	parameters["downloaded"] = history.Uploaded
+	parameters["downloaded_add"] = downloaded_add
+	parameters["uploaded"] = history.Uploaded
+	parameters["uploaded_add"] = uploaded_add
+	parameters["rotio"] = rotio
+	parameters["time"] = int(time.Since(self.StartedAt).Seconds())
+	parameters["time_la"] = int(time.Since(self.LastAction).Seconds())
+	parameters["time_leeched"] = history.Leeched
+	parameters["time_seeded"] = history.Seeded
+	parameters["torrents"] = len(published_torrents)
+
+	for k, v := range tr.credits {
+		if !v.enabled {
+			continue
+		}
+
+		credit_key := fmt.Sprintf("Credit%d", k)
+		parameters["credit"], _ = reflections.GetField(user_data, credit_key)
+
+		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
+
+		delta, _ := expression.Evaluate(parameters)
+		result := parameters["credit"].(float64) + delta.(float64)
+
+		reflections.SetField(&user_data, credit_key, result)
+		reflections.SetField(&windid_user_data, credit_key, result)
+	}
+
+	// Update credits
+	db.Save(&user_data)
+	db.Save(&windid_user_data)
+
+	// Update peer
 	switch event {
 	case "", "started":
 		{
@@ -307,125 +422,7 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		}
 	}
 
-	// Update history
-	var rotio float64
-	uploaded_add := 0
-	downloaded_add := 0
-	uploaded_total := uploaded
-	downloaded_total := downloaded
-
-	var history AppTorrentHistory
-	db.Where("torrent_id = ? AND uid = ?", torrent.Id, user.Uid).First(&history)
-
-	if (AppTorrentHistory{}) == history {
-		history = AppTorrentHistory{
-			Uid:            user.Uid,
-			TorrentId:      torrent.Id,
-			Uploaded:       uploaded,
-			UploadedLast:   uploaded,
-			Downloaded:     downloaded,
-			DownloadedLast: downloaded,
-			Left:           left,
-			Leeched:        0,
-			Seeded:         0,
-		}
-
-		db.Create(&history)
-	} else {
-		uploaded_add = int(math.Max(0, float64(uploaded-history.UploadedLast)))
-		downloaded_add = int(math.Max(0, float64(downloaded-history.DownloadedLast)))
-
-		uploaded_total = history.Uploaded + uploaded_add
-		downloaded_total = history.Downloaded + downloaded_add
-
-		history.Uploaded = uploaded_total
-		history.UploadedLast = uploaded
-		history.Downloaded = downloaded_total
-		history.DownloadedLast = downloaded
-		history.Left = left
-
-		if self.Seeder {
-			history.Seeded += int(time.Since(last_action).Seconds())
-		} else {
-			history.Leeched += int(time.Since(last_action).Seconds())
-		}
-
-		if event == "stopped" {
-			history.UploadedLast = 0
-			history.DownloadedLast = 0
-		}
-
-		db.Save(&history)
-	}
-
-	if downloaded_total != 0 {
-		rotio = math.Floor(float64(uploaded_total/downloaded_total*100)+0.5) / 100
-	} else {
-		rotio = 1
-	}
-
-	// Update credits
-	parameters := make(map[string]interface{}, 19)
-
-	parameters["e"] = math.E
-	parameters["pi"] = math.Pi
-	parameters["phi"] = math.Phi
-
-	var seeding []AppTorrentPeer
-	db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
-
-	var leeching []AppTorrentPeer
-	db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
-
-	var published_torrents []AppTorrent
-	db.Where("Owner = ?", user.Uid).Find(&published_torrents)
-
-	var user_data UserData
-	db.Where("uid = ?", user.Uid).Find(&user_data)
-
-	var windid_user_data WindidUserData
-	db.Where("uid = ?", user.Uid).Find(&windid_user_data)
-
-	parameters["alive"] = int(time.Since(torrent.CreatedAt).Hours() / 24)
-	parameters["seeders"] = seeders
-	parameters["leechers"] = leechers
-	parameters["size"] = torrent.Size
-	parameters["seeding"] = len(seeding)
-	parameters["leeching"] = len(leeching)
-	parameters["downloaded"] = uploaded_total
-	parameters["downloaded_add"] = downloaded_add
-	parameters["uploaded"] = uploaded_total
-	parameters["uploaded_add"] = uploaded_add
-	parameters["rotio"] = rotio
-	parameters["time"] = int(time.Since(self.StartedAt).Seconds())
-	parameters["time_la"] = int(time.Since(last_action).Seconds())
-	parameters["time_leeched"] = history.Leeched
-	parameters["time_seeded"] = history.Seeded
-	parameters["torrents"] = len(published_torrents)
-
-	for k, v := range tr.credits {
-		if !v.enabled {
-			continue
-		}
-
-		credit_key := fmt.Sprintf("Credit%d", k)
-		parameters["credit"], _ = reflections.GetField(user_data, credit_key)
-
-		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
-
-		delta, _ := expression.Evaluate(parameters)
-		result := parameters["credit"].(float64) + delta.(float64)
-
-		reflections.SetField(&user_data, credit_key, result)
-		reflections.SetField(&windid_user_data, credit_key, result)
-	}
-
-	db.Save(&user_data)
-	db.Save(&windid_user_data)
-
-	// Update torrent peers count
-	torrent.Seeders = seeders
-	torrent.Leechers = leechers
+	// Update torrent
 	torrent.UpdatedAt = time.Now()
 
 	db.Save(&torrent)
@@ -434,8 +431,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	peer_list := PeerList{
 		Interval:    840,
 		MinInterval: 30,
-		Complete:    seeders,
-		Incomplete:  leechers,
+		Complete:    torrent.Seeders,
+		Incomplete:  torrent.Leechers,
 		Peers:       peers,
 	}
 
