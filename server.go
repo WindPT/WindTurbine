@@ -246,8 +246,8 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
 	if (AppTorrentPeer{}) == self {
 		// Create peer if not exist
-		self.TorrentId = torrent.Id
 		self.Uid = user.Uid
+		self.TorrentId = torrent.Id
 		self.Username = pwuser.Username
 		self.Ip = ip
 		self.PeerId = peer_id

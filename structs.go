@@ -47,8 +47,8 @@ type AppTorrent struct {
 	Leechers  int
 	Seeders   int
 	Owner     int
-	UpdatedAt time.Time
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type AppTorrentAgent struct {
@@ -73,8 +73,8 @@ type AppTorrentHistory struct {
 
 type AppTorrentPeer struct {
 	Id          int       `gorm:"AUTO_INCREMENT;primary_key" bencode:"-"`
-	TorrentId   int       `bencode:"-"`
 	Uid         int       `bencode:"-"`
+	TorrentId   int       `bencode:"-"`
 	Username    string    `bencode:"-"`
 	Ip          string    `bencode:"ip"`
 	PeerId      string    `bencode:"peer id"`
