@@ -6,6 +6,7 @@ type Setting struct {
 	DSN         string
 	TablePrefix string
 	Listen      string
+	Credits     bool
 	Debug       bool
 }
 

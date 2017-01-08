@@ -317,72 +317,75 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 		db.Save(&history)
 	}
 
-	// Calculate rotio
-	if history.Downloaded != 0 {
-		rotio = math.Floor(float64(history.Uploaded/history.Downloaded*100)+0.5) / 100
-	} else {
-		rotio = 1
-	}
-
-	// Calculate increment of credits
-	parameters := make(map[string]interface{}, 19)
-
-	parameters["e"] = math.E
-	parameters["pi"] = math.Pi
-	parameters["phi"] = math.Phi
-
-	var seeding []AppTorrentPeer
-	db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
-
-	var leeching []AppTorrentPeer
-	db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
-
-	var published_torrents []AppTorrent
-	db.Where("Owner = ?", user.Uid).Find(&published_torrents)
-
-	var user_data UserData
-	db.Where("uid = ?", user.Uid).Find(&user_data)
-
-	var windid_user_data WindidUserData
-	db.Where("uid = ?", user.Uid).Find(&windid_user_data)
-
-	parameters["alive"] = int(time.Since(torrent.CreatedAt).Hours() / 24)
-	parameters["seeders"] = torrent.Seeders
-	parameters["leechers"] = torrent.Leechers
-	parameters["size"] = torrent.Size
-	parameters["seeding"] = len(seeding)
-	parameters["leeching"] = len(leeching)
-	parameters["downloaded"] = history.Uploaded
-	parameters["downloaded_add"] = downloaded_add
-	parameters["uploaded"] = history.Uploaded
-	parameters["uploaded_add"] = uploaded_add
-	parameters["rotio"] = rotio
-	parameters["time"] = int(time.Since(self.StartedAt).Seconds())
-	parameters["time_la"] = int(time.Since(self.LastAction).Seconds())
-	parameters["time_leeched"] = history.Leeched
-	parameters["time_seeded"] = history.Seeded
-	parameters["torrents"] = len(published_torrents)
-
-	for k, v := range tr.credits {
-		if !v.enabled {
-			continue
+	if tr.setting.Credits {
+		// Calculate rotio
+		if history.Downloaded != 0 {
+			rotio = math.Floor(float64(history.Uploaded/history.Downloaded*100)+0.5) / 100
+		} else {
+			rotio = 1
 		}
 
-		credit_key := fmt.Sprintf("Credit%d", k)
-		parameters["credit"], _ = reflections.GetField(user_data, credit_key)
+		// Prepare parameters for credits calculator
+		parameters := make(map[string]interface{}, 19)
 
-		expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
+		parameters["e"] = math.E
+		parameters["pi"] = math.Pi
+		parameters["phi"] = math.Phi
 
-		delta, _ := expression.Evaluate(parameters)
-		result := parameters["credit"].(float64) + delta.(float64)
+		var seeding []AppTorrentPeer
+		db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
 
-		reflections.SetField(&user_data, credit_key, result)
-		reflections.SetField(&windid_user_data, credit_key, result)
+		var leeching []AppTorrentPeer
+		db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
+
+		var published_torrents []AppTorrent
+		db.Where("Owner = ?", user.Uid).Find(&published_torrents)
+
+		var user_data UserData
+		db.Where("uid = ?", user.Uid).Find(&user_data)
+
+		var windid_user_data WindidUserData
+		db.Where("uid = ?", user.Uid).Find(&windid_user_data)
+
+		parameters["alive"] = int(time.Since(torrent.CreatedAt).Hours() / 24)
+		parameters["seeders"] = torrent.Seeders
+		parameters["leechers"] = torrent.Leechers
+		parameters["size"] = torrent.Size
+		parameters["seeding"] = len(seeding)
+		parameters["leeching"] = len(leeching)
+		parameters["downloaded"] = history.Uploaded
+		parameters["downloaded_add"] = downloaded_add
+		parameters["uploaded"] = history.Uploaded
+		parameters["uploaded_add"] = uploaded_add
+		parameters["rotio"] = rotio
+		parameters["time"] = int(time.Since(self.StartedAt).Seconds())
+		parameters["time_la"] = int(time.Since(self.LastAction).Seconds())
+		parameters["time_leeched"] = history.Leeched
+		parameters["time_seeded"] = history.Seeded
+		parameters["torrents"] = len(published_torrents)
+
+		// Calculate increment of credits
+		for k, v := range tr.credits {
+			if !v.enabled {
+				continue
+			}
+
+			credit_key := fmt.Sprintf("Credit%d", k)
+			parameters["credit"], _ = reflections.GetField(user_data, credit_key)
+
+			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
+
+			delta, _ := expression.Evaluate(parameters)
+			result := parameters["credit"].(float64) + delta.(float64)
+
+			reflections.SetField(&user_data, credit_key, result)
+			reflections.SetField(&windid_user_data, credit_key, result)
+		}
+
+		// Update credits
+		db.Save(&user_data)
+		db.Save(&windid_user_data)
 	}
-
-	// Update credits
-	db.Save(&user_data)
-	db.Save(&windid_user_data)
 
 	// Update peer
 	switch event {
