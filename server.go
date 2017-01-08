@@ -21,6 +21,7 @@ import (
 )
 
 func main() {
+	// Read config file
 	xmlFile, err := os.Open("config.xml")
 
 	if err != nil {
@@ -34,6 +35,7 @@ func main() {
 	var s Setting
 	xml.Unmarshal(b, &s)
 
+	// Initialize GORM
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
 		switch defaultTableName {
 		case "common_configs":
@@ -59,35 +61,36 @@ func main() {
 
 	defer db.Close()
 
+	// Load User-Agent whitelist
 	var user_agents []AppTorrentAgent
 	db.Order("id").Find(&user_agents)
 
-	credits := make(map[int]Credit)
+	// Load credits expression
+	var common_config CommonConfig
+	db.Where("name = \"app.torrent.credits\"").First(&common_config)
 
-	if s.Credits {
-		var common_config CommonConfig
-		db.Where("name = \"app.torrent.credits\"").First(&common_config)
+	decoder := php_serialize.NewUnSerializer(common_config.Value)
+	exp_pvalue, err := decoder.Decode()
 
-		decoder := php_serialize.NewUnSerializer(common_config.Value)
-		exp_pvalue, err := decoder.Decode()
-
-		if err != nil {
-			panic(err)
-		}
-
-		exp_array, _ := exp_pvalue.(php_serialize.PhpArray)
-
-		for k, v := range exp_array {
-			v_array := v.(php_serialize.PhpArray)
-			v_enabled := v_array["enabled"].(string)
-			v_exp := v_array["exp"].(string)
-
-			credits[k.(int)] = Credit{enabled: v_enabled == "1", exp: v_exp}
-		}
+	if err != nil {
+		panic(err)
 	}
 
-	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits}
+	exp_array, _ := exp_pvalue.(php_serialize.PhpArray)
+	credits := make(map[int]Credit)
 
+	for k, v := range exp_array {
+		v_array := v.(php_serialize.PhpArray)
+		v_enabled := v_array["enabled"].(string)
+		v_exp := v_array["exp"].(string)
+
+		credits[k.(int)] = Credit{enabled: v_enabled == "1", exp: v_exp}
+	}
+
+	// Prepare TrackerResource
+	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits, log: common_config.Value}
+
+	// Initialize IRIS
 	iris.OnError(iris.StatusNotFound, func(c *iris.Context) {
 		berror(c, "错误：Passkey 不能为空")
 	})
