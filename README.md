@@ -1,9 +1,10 @@
 WindTurbine
 ===
 
-[![Build Status](https://travis-ci.org/kinosang/WindTurbine.svg)](https://travis-ci.org/kinosang/WindTurbine)
+[![Travis](https://img.shields.io/travis/WindPT/WindTurbine.svg)](https://travis-ci.org/WindPT/WindTurbine)
+[![Gitter](https://img.shields.io/gitter/room/WindPT/WindTurbine.svg)](https://gitter.im/WindPT/WindTurbine)
 
-An experimental tracker server designed to work with [WindPT](https://github.com/kinosang/WindPT).
+An experimental tracker server designed to work with [WindPT](https://github.com/WindPT/WindPT).
 
 ## Requirements
 
@@ -25,8 +26,8 @@ Then, run this application.
 You can compile this project manually by yourself.
 
 ```bash
-$ go get github.com/kinosang/WindTurbine
-$ cd $GOPATH/src/github.com/kinosang/WindTurbine
+$ go get github.com/WindPT/WindTurbine
+$ cd $GOPATH/src/github.com/WindPT/WindTurbine
 $ godep restore
 $ make
 ```
