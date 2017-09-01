@@ -4,13 +4,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"github.com/Knetic/govaluate"
-	"github.com/jackpal/bencode-go"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/kataras/iris"
-	"github.com/kinosang/php_serialize"
-	"github.com/oleiade/reflections"
 	"io/ioutil"
 	"math"
 	"net"
@@ -18,6 +11,14 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Knetic/govaluate"
+	"github.com/jackpal/bencode-go"
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/kataras/iris"
+	"github.com/kinosang/php_serialize"
+	"github.com/oleiade/reflections"
 )
 
 func main() {
@@ -94,21 +95,22 @@ func main() {
 	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits, log: common_config.Value == "1"}
 
 	// Initialize IRIS
-	iris.OnError(iris.StatusNotFound, func(c *iris.Context) {
+	app := iris.New()
+	app.OnErrorCode(iris.StatusNotFound, func(c iris.Context) {
 		berror(c, "错误：Passkey 不能为空")
 	})
 
-	iris.Get("/:passkey", tr.Announcement)
-
-	iris.Listen(s.Listen)
+	app.Get("/{passkey}", tr.Announcement)
+	app.Run(iris.Addr(s.Listen))
 }
 
-func (tr *TrackerResource) Announcement(c *iris.Context) {
+func (tr *TrackerResource) Announcement(c iris.Context) {
 	// Get User-Agent
-	user_agent := string(c.UserAgent())
+
+	user_agent := string(c.Request().UserAgent())
 
 	// Get Passkey from url
-	passkey := c.Param("passkey")
+	passkey := c.Params().Get("passkey")
 
 	// Check parameters
 	m := c.URLParams()
@@ -130,10 +132,10 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 	left, _ := c.URLParamInt("left")
 
 	// Get client IP
-	ips := strings.Split(c.RequestHeader("X-FORWARDED-FOR"), ", ")
+	ips := strings.Split(c.GetHeader("X-FORWARDED-FOR"), ", ")
 	ip := ips[0]
 	if ip == "" {
-		ip = c.RequestIP()
+		ip = c.RemoteAddr()
 	}
 
 	if ip == "" {
@@ -470,15 +472,15 @@ func (tr *TrackerResource) Announcement(c *iris.Context) {
 
 	bencode.Marshal(buf, peer_list)
 
-	c.Text(200, buf.String())
+	c.Text(buf.String())
 }
 
-func berror(c *iris.Context, msg string) {
+func berror(c iris.Context, msg string) {
 	err := Error{msg}
 
 	buf := new(bytes.Buffer)
 
 	bencode.Marshal(buf, err)
 
-	c.Text(200, buf.String())
+	c.Text(buf.String())
 }
