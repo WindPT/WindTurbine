@@ -5,11 +5,10 @@ language: go
 matrix:
   fast_finish: true
   include:
+    - go: 1.9
     - go: tip
   allow_failures:
-    - go: 1.5.4
-    - go: 1.6.3
-    - go: 1.7.3
+    - go: tip
 
 before_install:
   - go get github.com/tools/godep
