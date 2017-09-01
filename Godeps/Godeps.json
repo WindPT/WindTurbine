@@ -45,24 +45,6 @@
 			"Rev": "50d4dbd4eb0e84778abe37cefef140271d96fade"
 		},
 		{
-			"ImportPath": "github.com/iris-contrib/formBinder",
-			"Rev": "023b47796b500a9a9407e81cbf1cf5ebf45718e0"
-		},
-		{
-			"ImportPath": "github.com/iris-contrib/lego/acme",
-			"Comment": "v0.3.1-87-g095d7f6",
-			"Rev": "095d7f6459c501cb15319aa2754afa221b81a3ec"
-		},
-		{
-			"ImportPath": "github.com/iris-contrib/letsencrypt",
-			"Comment": "v4",
-			"Rev": "1a3e5c619a13b307df3b1b4da7cb7e57d2e156dd"
-		},
-		{
-			"ImportPath": "github.com/iris-contrib/websocket",
-			"Rev": "cc9f1712095295a828e9a2efaef388d30b9c7760"
-		},
-		{
 			"ImportPath": "github.com/jackpal/bencode-go",
 			"Rev": "8b8d9a9b37fcd43f365439810d725081b114af68"
 		},
@@ -139,11 +121,7 @@
 		},
 		{
 			"ImportPath": "github.com/kataras/iris",
-			"Rev": "ac58a95d2dfaf7874dcbda2e6f9e0f46836a26a9"
-		},
-		{
-			"ImportPath": "github.com/kataras/iris/utils",
-			"Rev": "ac58a95d2dfaf7874dcbda2e6f9e0f46836a26a9"
+			"Rev": "5e0fb95f46bab5382836fafce8a79cb322ed5a46"
 		},
 		{
 			"ImportPath": "github.com/kinosang/php_serialize",
