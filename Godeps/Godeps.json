@@ -128,6 +128,10 @@
 			"Rev": "2ed680e7b1f34147164fa8073373e14fce02ac30"
 		},
 		{
+			"ImportPath": "github.com/kataras/pio",
+			"Rev": "825e39f34365e7db2c9fbc3692c16220e3bd7418"
+		},
+		{
 			"ImportPath": "github.com/kinosang/php_serialize",
 			"Rev": "428820206e70d323d1133baf9ffb4f06cd78b348"
 		},
