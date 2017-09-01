@@ -124,6 +124,10 @@
 			"Rev": "5e0fb95f46bab5382836fafce8a79cb322ed5a46"
 		},
 		{
+			"ImportPath": "github.com/kataras/golog",
+			"Rev": "2ed680e7b1f34147164fa8073373e14fce02ac30"
+		},
+		{
 			"ImportPath": "github.com/kinosang/php_serialize",
 			"Rev": "428820206e70d323d1133baf9ffb4f06cd78b348"
 		},
