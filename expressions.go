@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/Knetic/govaluate"
 	"math"
+
+	"github.com/Knetic/govaluate"
 )
 
 var functions = map[string]govaluate.ExpressionFunction{

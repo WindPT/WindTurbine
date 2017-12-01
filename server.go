@@ -63,36 +63,36 @@ func main() {
 	defer db.Close()
 
 	// Load User-Agent whitelist
-	var user_agents []AppTorrentAgent
-	db.Order("id").Find(&user_agents)
+	var userAgents []AppTorrentAgent
+	db.Order("id").Find(&userAgents)
 
 	// Load credits expression
-	var common_config CommonConfig
-	db.Where("name = \"app.torrent.credits\"").First(&common_config)
+	var commonConfig CommonConfig
+	db.Where("name = \"app.torrent.credits\"").First(&commonConfig)
 
-	decoder := php_serialize.NewUnSerializer(common_config.Value)
-	exp_pvalue, err := decoder.Decode()
+	decoder := php_serialize.NewUnSerializer(commonConfig.Value)
+	expPvalue, err := decoder.Decode()
 
 	if err != nil {
 		panic(err)
 	}
 
-	exp_array, _ := exp_pvalue.(php_serialize.PhpArray)
+	expArray, _ := expPvalue.(php_serialize.PhpArray)
 	credits := make(map[int]Credit)
 
-	for k, v := range exp_array {
-		v_array := v.(php_serialize.PhpArray)
-		v_enabled := v_array["enabled"].(string)
-		v_exp := v_array["exp"].(string)
+	for k, v := range expArray {
+		vArray := v.(php_serialize.PhpArray)
+		vEnabled := vArray["enabled"].(string)
+		vExp := vArray["exp"].(string)
 
-		credits[k.(int)] = Credit{enabled: v_enabled == "1", exp: v_exp}
+		credits[k.(int)] = Credit{enabled: vEnabled == "1", exp: vExp}
 	}
 
 	// Load logging switch
-	db.Where("name = \"app.torrent.log\"").First(&common_config)
+	db.Where("name = \"app.torrent.log\"").First(&commonConfig)
 
 	// Prepare TrackerResource
-	tr := &TrackerResource{setting: s, user_agents: user_agents, credits: credits, log: common_config.Value == "1"}
+	tr := &TrackerResource{setting: s, userAgents: userAgents, credits: credits, log: commonConfig.Value == "1"}
 
 	// Initialize IRIS
 	app := iris.New()
@@ -100,32 +100,33 @@ func main() {
 		berror(c, "错误：Passkey 不能为空")
 	})
 
-	app.Get("/{passkey}", tr.Announcement)
+	app.Get("/{passkey}", tr.HTTPAnnouncementHandler)
 	app.Run(iris.Addr(s.Listen))
 }
 
-func (tr *TrackerResource) Announcement(c iris.Context) {
+// HTTPAnnouncementHandler is the handler for BEP-3 Tracker GET requests.
+func (tr *TrackerResource) HTTPAnnouncementHandler(c iris.Context) {
 	// Get User-Agent
 
-	user_agent := string(c.Request().UserAgent())
+	userAgent := string(c.Request().UserAgent())
 
 	// Get Passkey from url
 	passkey := c.Params().Get("passkey")
 
 	// Check parameters
 	m := c.URLParams()
-	required_params := []string{"info_hash", "peer_id", "port", "uploaded", "downloaded", "left"}
-	for _, param_key := range required_params {
-		if _, ok := m[param_key]; !ok {
-			berror(c, fmt.Sprintf("错误：缺少参数 %s", param_key))
+	requiredParams := []string{"info_hash", "peer_id", "port", "uploaded", "downloaded", "left"}
+	for _, paramKey := range requiredParams {
+		if _, ok := m[paramKey]; !ok {
+			berror(c, fmt.Sprintf("错误：缺少参数 %s", paramKey))
 			return
 		}
 	}
 
 	// Get URL parameters
 	event := c.URLParam("event")
-	info_hash := c.URLParam("info_hash")
-	peer_id := c.URLParam("peer_id")
+	infoHash := c.URLParam("info_hash")
+	peerID := c.URLParam("peer_id")
 	port, _ := c.URLParamInt("port")
 	uploaded, _ := c.URLParamInt("uploaded")
 	downloaded, _ := c.URLParamInt("downloaded")
@@ -145,10 +146,10 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 
 	// Check if User-Agent allowed
 	allowed := false
-	for _, v := range tr.user_agents {
-		if allowed, _ = regexp.MatchString(v.AgentPattern, user_agent); allowed {
-			if len(v.PeerIdPattern) > 0 {
-				if allowed, _ = regexp.MatchString(v.PeerIdPattern, peer_id); allowed {
+	for _, v := range tr.userAgents {
+		if allowed, _ = regexp.MatchString(v.AgentPattern, userAgent); allowed {
+			if len(v.PeerIDPattern) > 0 {
+				if allowed, _ = regexp.MatchString(v.PeerIDPattern, peerID); allowed {
 					break
 				}
 			} else {
@@ -184,7 +185,7 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 
 	// Check if BBS user existed
 	var pwuser User
-	db.Where("uid = ?", user.Uid).First(&pwuser)
+	db.Where("uid = ?", user.UID).First(&pwuser)
 
 	if (User{}) == pwuser {
 		berror(c, "错误：用户不存在，请尝试重新下载种子")
@@ -192,32 +193,32 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 	}
 
 	// Check if BBS user is banned
-	var user_ban UserBan
-	db.Where("uid = ?", user.Uid).First(&user_ban)
+	var userBan UserBan
+	db.Where("uid = ?", user.UID).First(&userBan)
 
-	if (UserBan{}) != user_ban {
-		berror(c, fmt.Sprintf("错误：用户已被封禁 %s", user_ban.Reason))
+	if (UserBan{}) != userBan {
+		berror(c, fmt.Sprintf("错误：用户已被封禁 %s", userBan.Reason))
 		return
 	}
 
 	// Get torrent info by info_hash
 	var torrent AppTorrent
-	db.Where("info_hash = ?", info_hash).First(&torrent)
+	db.Where("info_hash = ?", infoHash).First(&torrent)
 
 	if (AppTorrent{}) == torrent {
 		berror(c, "错误：种子信息未注册，可能是已被删除")
 		return
 	}
 
-	var bbs_thread BbsThread
-	db.Where("tid = ?", torrent.Tid).First(&bbs_thread)
+	var bbsThread BbsThread
+	db.Where("tid = ?", torrent.Tid).First(&bbsThread)
 
-	if (BbsThread{}) == bbs_thread {
+	if (BbsThread{}) == bbsThread {
 		berror(c, "错误：种子不存在")
 		return
 	}
 
-	if bbs_thread.Disabled > 0 && bbs_thread.CreatedUserid != user.Uid {
+	if bbsThread.Disabled > 0 && bbsThread.CreatedUserid != user.UID {
 		if pwuser.Groupid < 3 || pwuser.Groupid > 5 {
 			berror(c, "错误：种子已删除或待审核")
 			return
@@ -227,13 +228,13 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 	// Log announcement
 	if tr.log {
 		db.Create(&AppTorrentLog{
-			Uid:         user.Uid,
-			TorrentId:   torrent.Id,
-			Agent:       user_agent,
+			UID:         user.UID,
+			TorrentID:   torrent.ID,
+			Agent:       userAgent,
 			Passkey:     passkey,
-			InfoHash:    info_hash,
-			PeerId:      peer_id,
-			Ip:          ip,
+			InfoHash:    infoHash,
+			PeerID:      peerID,
+			IP:          ip,
 			Port:        port,
 			Uploaded:    uploaded,
 			Downloaded:  downloaded,
@@ -247,11 +248,11 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 	torrent.Leechers = 0
 	var self AppTorrentPeer
 	var peers []AppTorrentPeer
-	db.Where("torrent_id = ?", torrent.Id).Find(&peers)
+	db.Where("torrent_id = ?", torrent.ID).Find(&peers)
 
 	i := 0
 	for _, peer := range peers {
-		if peer.Uid == user.Uid {
+		if peer.UID == user.UID {
 			// Get self from peers list by Uid
 			self = peer
 			peers = append(peers[:i], peers[i+1:]...)
@@ -269,16 +270,16 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 
 	if (AppTorrentPeer{}) == self {
 		// Create peer if not exist
-		self.Uid = user.Uid
-		self.TorrentId = torrent.Id
+		self.UID = user.UID
+		self.TorrentID = torrent.ID
 		self.Username = pwuser.Username
-		self.Ip = ip
-		self.PeerId = peer_id
+		self.IP = ip
+		self.PeerID = peerID
 		self.Port = port
 		self.Uploaded = uploaded
 		self.Downloaded = downloaded
 		self.Left = left
-		self.Agent = user_agent
+		self.Agent = userAgent
 		self.StartedAt = time.Now()
 		self.LastAction = time.Now()
 	}
@@ -302,23 +303,23 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 	}
 
 	// Check if already started
-	if self.PeerId != peer_id || self.Ip != ip {
+	if self.PeerID != peerID || self.IP != ip {
 		berror(c, "错误：同一种子禁止多处下载")
 		return
 	}
 
 	// Get history by torrent ID and Uid
 	var history AppTorrentHistory
-	db.Where("torrent_id = ? AND uid = ?", torrent.Id, user.Uid).First(&history)
+	db.Where("torrent_id = ? AND uid = ?", torrent.ID, user.UID).First(&history)
 
 	var rotio float64
-	var uploaded_add, downloaded_add int
+	var uploadedAdd, downloadedAdd int
 
 	if (AppTorrentHistory{}) == history {
 		// Create history if not exist
 		history = AppTorrentHistory{
-			Uid:        user.Uid,
-			TorrentId:  torrent.Id,
+			UID:        user.UID,
+			TorrentID:  torrent.ID,
 			Uploaded:   uploaded,
 			Downloaded: downloaded,
 			Left:       left,
@@ -329,11 +330,11 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 		db.Create(&history)
 	} else {
 		// Calculate increment
-		uploaded_add = int(math.Max(0, float64(uploaded-self.Uploaded)))
-		downloaded_add = int(math.Max(0, float64(downloaded-self.Downloaded)))
+		uploadedAdd = int(math.Max(0, float64(uploaded-self.Uploaded)))
+		downloadedAdd = int(math.Max(0, float64(downloaded-self.Downloaded)))
 
-		history.Uploaded = history.Uploaded + uploaded_add
-		history.Downloaded = history.Downloaded + downloaded_add
+		history.Uploaded = history.Uploaded + uploadedAdd
+		history.Downloaded = history.Downloaded + downloadedAdd
 
 		history.Left = left
 
@@ -362,19 +363,19 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 		parameters["phi"] = math.Phi
 
 		var seeding []AppTorrentPeer
-		db.Where("uid = ? AND seeder = 1", user.Uid).Find(&seeding)
+		db.Where("uid = ? AND seeder = 1", user.UID).Find(&seeding)
 
 		var leeching []AppTorrentPeer
-		db.Where("uid = ? AND seeder = 0", user.Uid).Find(&leeching)
+		db.Where("uid = ? AND seeder = 0", user.UID).Find(&leeching)
 
-		var published_torrents []AppTorrent
-		db.Where("Owner = ?", user.Uid).Find(&published_torrents)
+		var publishedTorrents []AppTorrent
+		db.Where("Owner = ?", user.UID).Find(&publishedTorrents)
 
-		var user_data UserData
-		db.Where("uid = ?", user.Uid).Find(&user_data)
+		var userData UserData
+		db.Where("uid = ?", user.UID).Find(&userData)
 
-		var windid_user_data WindidUserData
-		db.Where("uid = ?", user.Uid).Find(&windid_user_data)
+		var windidUserData WindidUserData
+		db.Where("uid = ?", user.UID).Find(&windidUserData)
 
 		parameters["alive"] = int(time.Since(torrent.CreatedAt).Hours() / 24)
 		parameters["seeders"] = torrent.Seeders
@@ -383,15 +384,15 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 		parameters["seeding"] = len(seeding)
 		parameters["leeching"] = len(leeching)
 		parameters["downloaded"] = history.Uploaded
-		parameters["downloaded_add"] = downloaded_add
+		parameters["downloaded_add"] = downloadedAdd
 		parameters["uploaded"] = history.Uploaded
-		parameters["uploaded_add"] = uploaded_add
+		parameters["uploaded_add"] = uploadedAdd
 		parameters["rotio"] = rotio
 		parameters["time"] = int(time.Since(self.StartedAt).Seconds())
 		parameters["time_la"] = int(time.Since(self.LastAction).Seconds())
 		parameters["time_leeched"] = history.Leeched
 		parameters["time_seeded"] = history.Seeded
-		parameters["torrents"] = len(published_torrents)
+		parameters["torrents"] = len(publishedTorrents)
 
 		// Calculate increment of credits
 		for k, v := range tr.credits {
@@ -399,21 +400,21 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 				continue
 			}
 
-			credit_key := fmt.Sprintf("Credit%d", k)
-			parameters["credit"], _ = reflections.GetField(user_data, credit_key)
+			creditKey := fmt.Sprintf("Credit%d", k)
+			parameters["credit"], _ = reflections.GetField(userData, creditKey)
 
 			expression, _ := govaluate.NewEvaluableExpressionWithFunctions(v.exp, functions)
 
 			delta, _ := expression.Evaluate(parameters)
 			result := parameters["credit"].(float64) + delta.(float64)
 
-			reflections.SetField(&user_data, credit_key, result)
-			reflections.SetField(&windid_user_data, credit_key, result)
+			reflections.SetField(&userData, creditKey, result)
+			reflections.SetField(&windidUserData, creditKey, result)
 		}
 
 		// Update credits
-		db.Save(&user_data)
-		db.Save(&windid_user_data)
+		db.Save(&userData)
+		db.Save(&windidUserData)
 	}
 
 	// Update peer
@@ -424,14 +425,14 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 			self.Uploaded = uploaded
 			self.Downloaded = downloaded
 			self.Left = left
-			self.Agent = user_agent
+			self.Agent = userAgent
 			self.LastAction = time.Now()
 
 			db.Save(&self)
 		}
 	case "stopped":
 		{
-			if self.Id != 0 {
+			if self.ID != 0 {
 				db.Delete(&self)
 			}
 		}
@@ -441,7 +442,7 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 			self.Uploaded = uploaded
 			self.Downloaded = downloaded
 			self.Left = left
-			self.Agent = user_agent
+			self.Agent = userAgent
 			self.FinishedAt = time.Now()
 			self.LastAction = time.Now()
 
@@ -460,7 +461,7 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 	db.Save(&torrent)
 
 	// Output peers list to client
-	peer_list := PeerList{
+	peerList := PeerList{
 		Interval:    840,
 		MinInterval: 30,
 		Complete:    torrent.Seeders,
@@ -470,7 +471,7 @@ func (tr *TrackerResource) Announcement(c iris.Context) {
 
 	buf := new(bytes.Buffer)
 
-	bencode.Marshal(buf, peer_list)
+	bencode.Marshal(buf, peerList)
 
 	c.Text(buf.String())
 }

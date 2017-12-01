@@ -2,6 +2,7 @@ package main
 
 import "time"
 
+// Setting defines the struct for XML configuration file.
 type Setting struct {
 	DSN         string
 	TablePrefix string
@@ -9,26 +10,26 @@ type Setting struct {
 	Debug       bool
 }
 
+// TrackerResource take configuration into the handler
 type TrackerResource struct {
-	setting     Setting
-	user_agents []AppTorrentAgent
-	credits     map[int]Credit
-	log         bool
+	setting    Setting
+	userAgents []AppTorrentAgent
+	credits    map[int]Credit
+	log        bool
 }
 
+// Credit store the expressions for credits
 type Credit struct {
 	enabled bool
 	exp     string
 }
 
-/*
- * Structs for BEncode
- */
-
+// Error for BEncode
 type Error struct {
 	reason string `bencode:"failure reason"`
 }
 
+// PeerList for BEncode
 type PeerList struct {
 	Interval    int              `bencode:"interval"`
 	MinInterval int              `bencode:"min interval"`
@@ -37,11 +38,9 @@ type PeerList struct {
 	Peers       []AppTorrentPeer `bencode:"peers"`
 }
 
-/*
- * Structs for DB
- */
+// AppTorrent table
 type AppTorrent struct {
-	Id        int `gorm:"AUTO_INCREMENT;primary_key"`
+	ID        int `gorm:"AUTO_INCREMENT;primary_key"`
 	Tid       int
 	InfoHash  string
 	Size      int
@@ -52,19 +51,21 @@ type AppTorrent struct {
 	UpdatedAt time.Time
 }
 
+// AppTorrentAgent table
 type AppTorrentAgent struct {
-	Id            int `gorm:"AUTO_INCREMENT;primary_key"`
+	ID            int `gorm:"AUTO_INCREMENT;primary_key"`
 	Family        string
-	PeerIdPattern string
+	PeerIDPattern string
 	AgentPattern  string
-	Https         bool `gorm:"DEFAULT:0"`
+	HTTPS         bool `gorm:"DEFAULT:0"`
 	Hits          int
 }
 
+// AppTorrentHistory table
 type AppTorrentHistory struct {
-	Id         int `gorm:"AUTO_INCREMENT;primary_key"`
-	Uid        int
-	TorrentId  int
+	ID         int `gorm:"AUTO_INCREMENT;primary_key"`
+	UID        int
+	TorrentID  int
 	Uploaded   int
 	Downloaded int
 	Left       int
@@ -72,15 +73,16 @@ type AppTorrentHistory struct {
 	Seeded     int
 }
 
+// AppTorrentLog table
 type AppTorrentLog struct {
-	Id          int `gorm:"AUTO_INCREMENT;primary_key"`
-	Uid         int
-	TorrentId   int
+	ID          int `gorm:"AUTO_INCREMENT;primary_key"`
+	UID         int
+	TorrentID   int
 	Agent       string
 	Passkey     string
 	InfoHash    string
-	PeerId      string
-	Ip          string
+	PeerID      string
+	IP          string
 	Port        int
 	Uploaded    int
 	Downloaded  int
@@ -88,13 +90,14 @@ type AppTorrentLog struct {
 	AnnouncedAt time.Time
 }
 
+// AppTorrentPeer table
 type AppTorrentPeer struct {
-	Id          int       `gorm:"AUTO_INCREMENT;primary_key" bencode:"-"`
-	Uid         int       `bencode:"-"`
-	TorrentId   int       `bencode:"-"`
+	ID          int       `gorm:"AUTO_INCREMENT;primary_key" bencode:"-"`
+	UID         int       `bencode:"-"`
+	TorrentID   int       `bencode:"-"`
 	Username    string    `bencode:"-"`
-	Ip          string    `bencode:"ip"`
-	PeerId      string    `bencode:"peer id"`
+	IP          string    `bencode:"ip"`
+	PeerID      string    `bencode:"peer id"`
 	Port        int       `bencode:"port"`
 	Uploaded    int       `bencode:"-"`
 	Downloaded  int       `bencode:"-"`
@@ -107,37 +110,43 @@ type AppTorrentPeer struct {
 	LastAction  time.Time `bencode:"-"`
 }
 
+// AppTorrentUser table
 type AppTorrentUser struct {
-	Uid     int `gorm:"primary_key"`
+	UID     int `gorm:"primary_key"`
 	Passkey string
 }
 
+// BbsThread table
 type BbsThread struct {
 	Tid           int `gorm:"AUTO_INCREMENT;primary_key"`
 	Disabled      int
 	CreatedUserid int
 }
 
+// CommonConfig table
 type CommonConfig struct {
 	Name      string
 	Namespace string
 	Value     string
 }
 
+// User table
 type User struct {
-	Uid      int `gorm:"AUTO_INCREMENT;primary_key"`
+	UID      int `gorm:"AUTO_INCREMENT;primary_key"`
 	Username string
 	Groupid  int
 }
 
+// UserBan table
 type UserBan struct {
-	Id     int `gorm:"AUTO_INCREMENT;primary_key"`
-	Uid    int
+	ID     int `gorm:"AUTO_INCREMENT;primary_key"`
+	UID    int
 	Reason string
 }
 
+// UserData table
 type UserData struct {
-	Uid     int `gorm:"AUTO_INCREMENT;primary_key"`
+	UID     int `gorm:"AUTO_INCREMENT;primary_key"`
 	Credit1 float64
 	Credit2 float64
 	Credit3 float64
@@ -148,4 +157,5 @@ type UserData struct {
 	Credit8 float64
 }
 
+// WindidUserData table
 type WindidUserData UserData
