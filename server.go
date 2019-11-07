@@ -16,7 +16,7 @@ import (
 	"github.com/jackpal/bencode-go"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/kataras/iris"
+	"github.com/kataras/iris/v12"
 	"github.com/kinosang/php_serialize"
 	"github.com/oleiade/reflections"
 )

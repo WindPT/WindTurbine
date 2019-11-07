@@ -8,7 +8,7 @@ An experimental tracker server designed to work with [WindPT](https://github.com
 
 ## Requirements
 
- * Go 1.5 or higher
+ * Go 1.13 or higher
  * MySQL (4.1+) or MariaDB
 
 ## Installation
@@ -28,7 +28,6 @@ You can compile this project manually by yourself.
 ```bash
 $ go get github.com/WindPT/WindTurbine
 $ cd $GOPATH/src/github.com/WindPT/WindTurbine
-$ godep restore
 $ make
 ```
 
